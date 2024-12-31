@@ -1,0 +1,8 @@
+{
+    "httpServer": {
+        "port": 8080
+    },
+    "storage": {
+        "path": "XXXXXXXXXXXXXXXX"
+    }
+}

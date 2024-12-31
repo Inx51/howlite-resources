@@ -2,7 +2,9 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
+	"github.com/inx51/howlite/resources/api/config"
 	"github.com/inx51/howlite/resources/api/handler"
 )
 
@@ -10,7 +12,7 @@ func Run() {
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case "GET":
-			handler.GetResource(resp, req)
+			handler.GetResource(&resp, req)
 		case "POST":
 			handler.CreateResource(&resp, req)
 		case "PUT":
@@ -22,5 +24,5 @@ func Run() {
 		}
 	})
 
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":"+strconv.Itoa(config.Instance.HttpServer.Port), nil)
 }
