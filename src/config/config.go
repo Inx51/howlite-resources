@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/inx51/howlite/resources/api/path"
+	"github.com/inx51/howlite/resources/path"
 )
 
 type Config struct {

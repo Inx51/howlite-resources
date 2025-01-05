@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/inx51/howlite/resources/api/config"
 	"github.com/inx51/howlite/resources/api/handler"
+	"github.com/inx51/howlite/resources/config"
 )
 
 func Run() {

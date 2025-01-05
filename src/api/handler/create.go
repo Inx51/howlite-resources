@@ -5,21 +5,21 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/inx51/howlite/resources/api/resource"
-	reserr "github.com/inx51/howlite/resources/api/resource/errors"
-	"github.com/inx51/howlite/resources/api/url"
+	"github.com/inx51/howlite/resources/resource"
+	"github.com/inx51/howlite/resources/url"
 )
 
 func CreateResource(resp *http.ResponseWriter, req *http.Request) {
-	identifier := resource.GetIdentifier(&req.URL.Path)
-	err := resource.Create(&identifier, &req.Body, &req.Header)
+	identifier := resource.NewIdentifier(&req.URL.Path)
+	res := resource.New(&identifier, req.Header, &req.Body)
+	err := resource.Create(&res)
 	if err != nil {
-		if errors.Is(err, reserr.AlreadyExistsError{Identifier: identifier}) {
-			slog.Warn("Failed to create resource.", slog.Any("error", err), slog.Any("identifier", identifier))
+		if errors.Is(err, resource.AlreadyExistsError{Identifier: &identifier}) {
+			slog.Warn("Failed to create resource.", slog.Any("error", err), slog.Any("identifier", identifier.Value))
 			(*resp).WriteHeader(409)
 			return
 		}
-		slog.Error("Unhandled error.", slog.Any("error", err), slog.Any("identifier", identifier))
+		slog.Error("Unhandled error.", slog.Any("error", err), slog.Any("identifier", identifier.Value))
 		return
 	}
 	(*resp).WriteHeader(201)
