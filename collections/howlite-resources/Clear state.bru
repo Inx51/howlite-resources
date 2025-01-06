@@ -1,0 +1,21 @@
+meta {
+  name: Clear state
+  type: http
+  seq: 1
+}
+
+delete {
+  url: http://localhost:8080/test/12345
+  body: none
+  auth: none
+}
+
+body:json {
+  {
+    "hello":"world"
+  }
+}
+
+assert {
+  res.status: in 204,404
+}

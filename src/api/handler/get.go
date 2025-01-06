@@ -15,7 +15,7 @@ func GetResource(resp *http.ResponseWriter, req *http.Request) {
 	res, err := resource.Get(&identifier)
 	if err != nil {
 		if errors.Is(err, resource.NotFoundError{Identifier: &identifier}) {
-			slog.Warn("Failed to get resource.", slog.Any("error", err), slog.Any("identifier", identifier.Value))
+			slog.Warn("Failed to get resource since it doesnt exist.", slog.Any("error", err), slog.Any("identifier", identifier.Value))
 			(*resp).WriteHeader(404)
 			return
 		}
@@ -28,7 +28,7 @@ func GetResource(resp *http.ResponseWriter, req *http.Request) {
 			(*resp).Header().Add(k, strings.Join(v, ",'"))
 		}
 	}
-	(*resp).WriteHeader(201)
+	(*resp).WriteHeader(200)
 	defer (*res.Body).Close()
 
 	buff := make([]byte, 1024)

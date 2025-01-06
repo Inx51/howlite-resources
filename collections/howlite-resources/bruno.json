@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "howlite-resources",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

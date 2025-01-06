@@ -110,6 +110,18 @@ func Create(res *Resource) error {
 	return nil
 }
 
+func Remove(identifier *ResourceIdentifier) error {
+	path := getPath(identifier)
+	err := os.Remove(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return NotFoundError{Identifier: identifier}
+		}
+		panic(err)
+	}
+	return nil
+}
+
 func filterHeaders(headers *map[string][]string) map[string][]string {
 	forbiddenHeaders := []string{"host", "accept-encoding", "connection", "accepts", "user-agent"}
 	var result = make(map[string][]string)
