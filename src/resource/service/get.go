@@ -23,7 +23,7 @@ func Get(identifier *resource.ResourceIdentifier, storage *storage.Storage) (*re
 	readCloser := io.NopCloser(file)
 
 	headerLengthBytes := make([]byte, 8)
-	readCloser.Read(headerLengthBytes)
+	_, err = readCloser.Read(headerLengthBytes)
 	if err != nil {
 		panic(err)
 	}
