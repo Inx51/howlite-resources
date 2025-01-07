@@ -11,19 +11,19 @@ import (
 
 func Run() {
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
-		store := storage.Create()
+		storage := storage.Create()
 
 		switch req.Method {
 		case "GET":
-			handler.GetResource(resp, req, store)
+			handler.GetResource(resp, req, &storage)
 		case "POST":
-			handler.CreateResource(resp, req, store)
+			handler.CreateResource(resp, req, &storage)
 		case "PUT":
-			handler.ReplaceResource(resp, req, store)
+			handler.ReplaceResource(resp, req, &storage)
 		case "DELETE":
-			handler.RemoveResource(resp, req, store)
+			handler.RemoveResource(resp, req, &storage)
 		case "HEAD":
-			handler.ResourceExists(resp, req, store)
+			handler.ResourceExists(resp, req, &storage)
 		}
 	})
 

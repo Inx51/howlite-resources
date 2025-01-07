@@ -1,6 +1,8 @@
 package resource
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type AlreadyExistsError struct {
 	Identifier *ResourceIdentifier

@@ -6,15 +6,17 @@ import (
 	"net/http"
 
 	"github.com/inx51/howlite/resources/resource"
+	"github.com/inx51/howlite/resources/resource/service"
+	"github.com/inx51/howlite/resources/storage"
 )
 
 func RemoveResource(
-	resp http.ResponseWriter, 
+	resp http.ResponseWriter,
 	req *http.Request,
-	storage *storage.Storage
+	storage *storage.Storage,
 ) {
 	identifier := resource.NewIdentifier(&req.URL.Path)
-	err := resource.Remove(&identifier)
+	err := service.Remove(&identifier, storage)
 	if errors.Is(err, resource.NotFoundError{Identifier: &identifier}) {
 		slog.Warn("Failed to delete resource since it doesnt exist.", slog.Any("error", err), slog.Any("identifier", identifier.Value))
 		resp.WriteHeader(404)

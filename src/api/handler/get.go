@@ -8,15 +8,17 @@ import (
 	"strings"
 
 	"github.com/inx51/howlite/resources/resource"
+	"github.com/inx51/howlite/resources/resource/service"
+	"github.com/inx51/howlite/resources/storage"
 )
 
 func GetResource(
 	resp http.ResponseWriter,
 	req *http.Request,
-	storage *storage.Storage
+	storage *storage.Storage,
 ) {
 	identifier := resource.NewIdentifier(&req.URL.Path)
-	res, err := resource.Get(&identifier, &storage)
+	res, err := service.Get(&identifier, storage)
 	if err != nil {
 		if errors.Is(err, resource.NotFoundError{Identifier: &identifier}) {
 			slog.Warn("Failed to get resource since it doesnt exist.", slog.Any("error", err), slog.Any("identifier", identifier.Value))

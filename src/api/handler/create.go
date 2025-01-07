@@ -6,17 +6,19 @@ import (
 	"net/http"
 
 	"github.com/inx51/howlite/resources/resource"
+	"github.com/inx51/howlite/resources/resource/service"
+	"github.com/inx51/howlite/resources/storage"
 	"github.com/inx51/howlite/resources/url"
 )
 
 func CreateResource(
 	resp http.ResponseWriter,
 	req *http.Request,
-	storage *storage.Storage
+	storage *storage.Storage,
 ) {
 	identifier := resource.NewIdentifier(&req.URL.Path)
 	res := resource.New(&identifier, req.Header, &req.Body)
-	err := resource.Create(&res)
+	err := service.Create(&res, storage)
 	if err != nil {
 		if errors.Is(err, resource.AlreadyExistsError{Identifier: &identifier}) {
 			slog.Warn("Failed to create resource.", slog.Any("error", err), slog.Any("identifier", identifier.Value))
