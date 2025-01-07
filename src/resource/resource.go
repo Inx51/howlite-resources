@@ -10,6 +10,7 @@ import (
 
 	"github.com/inx51/howlite/resources/config"
 	"github.com/inx51/howlite/resources/hash"
+	"github.com/inx51/howlite/resources/storage"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -27,7 +28,7 @@ func New(identifier *ResourceIdentifier, headers map[string][]string, body *io.R
 	}
 }
 
-func Get(identifier *ResourceIdentifier) (*Resource, error) {
+func Get(identifier *ResourceIdentifier, storage *storage.Storage) (*Resource, error) {
 	path := getPath(identifier)
 	file, err := os.Open(path)
 	if err != nil {

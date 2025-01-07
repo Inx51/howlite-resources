@@ -9,19 +9,23 @@ import (
 	"github.com/inx51/howlite/resources/url"
 )
 
-func CreateResource(resp *http.ResponseWriter, req *http.Request) {
+func CreateResource(
+	resp http.ResponseWriter,
+	req *http.Request,
+	storage *storage.Storage
+) {
 	identifier := resource.NewIdentifier(&req.URL.Path)
 	res := resource.New(&identifier, req.Header, &req.Body)
 	err := resource.Create(&res)
 	if err != nil {
 		if errors.Is(err, resource.AlreadyExistsError{Identifier: &identifier}) {
 			slog.Warn("Failed to create resource.", slog.Any("error", err), slog.Any("identifier", identifier.Value))
-			(*resp).WriteHeader(409)
+			resp.WriteHeader(409)
 			return
 		}
 		slog.Error("Unhandled error.", slog.Any("error", err), slog.Any("identifier", identifier.Value))
 		return
 	}
-	(*resp).WriteHeader(201)
-	(*resp).Header().Add("Location", url.GetAbsolute(req.URL))
+	resp.WriteHeader(201)
+	resp.Header().Add("Location", url.GetAbsolute(req.URL))
 }

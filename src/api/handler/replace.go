@@ -2,6 +2,10 @@ package handler
 
 import "net/http"
 
-func ReplaceResource(resp *http.ResponseWriter, req *http.Request) {
+func ReplaceResource(
+	resp http.ResponseWriter,
+	req *http.Request, 
+	storage *storage.Storage
+) {
 
 }
