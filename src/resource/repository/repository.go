@@ -10,9 +10,9 @@ type Repository struct {
 	Storage storage.Storage
 }
 
-func NewRepository(storage storage.Storage) *Repository {
+func NewRepository(storage *storage.Storage) *Repository {
 	return &Repository{
-		Storage: storage,
+		Storage: *storage,
 	}
 }
 

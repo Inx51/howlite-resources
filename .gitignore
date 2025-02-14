@@ -1,1 +1,2 @@
-/src/cmd/config.secret.json 
+.vscode
+/src/.env.local

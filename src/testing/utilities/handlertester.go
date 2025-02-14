@@ -16,5 +16,5 @@ func CreateHandlerParameters(tester *tester.Tester, storage storage.Storage) (ht
 }
 
 func createRepository(storage storage.Storage) *repository.Repository {
-	return repository.NewRepository(storage)
+	return repository.NewRepository(&storage)
 }
