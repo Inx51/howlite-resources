@@ -14,9 +14,10 @@ import (
 func main() {
 	application := NewApplication()
 	application.SetupConfiguration()
-	application.SetupLogger()
+	application.SetupOpenTelemetry()
 	application.SetupStorage()
 	application.SetupRepository()
+	application.SetupHandlers()
 
 	application.Run()
 }
@@ -40,7 +41,8 @@ func (app *Application) SetupConfiguration() {
 	app.config = &config
 }
 
-func (app *Application) SetupLogger() {
+func (app *Application) SetupOpenTelemetry() {
+
 }
 
 func (app *Application) SetupStorage() {
@@ -51,6 +53,10 @@ func (app *Application) SetupRepository() {
 	app.repository = repository.NewRepository(&app.storage)
 }
 
+func (app *Application) SetupHandlers() {
+	api.SetupHandlers(app.repository)
+}
+
 func (app *Application) Run() {
-	api.Run(app.repository)
+	api.Run(app.config.Host, app.config.Port)
 }

@@ -2,12 +2,13 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/inx51/howlite/resources/api/handler"
 	"github.com/inx51/howlite/resources/resource/repository"
 )
 
-func Run(repository *repository.Repository) {
+func SetupHandlers(repository *repository.Repository) {
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case "GET":
@@ -24,6 +25,8 @@ func Run(repository *repository.Repository) {
 			resp.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	})
+}
 
-	http.ListenAndServe("localhost:8080", nil)
+func Run(host string, port int) {
+	http.ListenAndServe(host+":"+strconv.Itoa(port), nil)
 }
