@@ -1,0 +1,38 @@
+version: '3.7'
+services:
+  loki:
+    image: grafana/loki:latest
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+    command: -config.file=/etc/loki/loki-config.yaml
+  
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus-config.yaml:/etc/prometheus/prometheus.yml
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    volumes:
+      - ./tempo-config.yaml:/etc/tempo-local.yaml
+    command: ["-config.file=/etc/tempo-local.yaml"]
+    # networks:
+    #   - traces
+  
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana-config.ini:/etc/grafana/grafana.ini
+      - ./datasources.yaml:/etc/grafana/provisioning/datasources/provisioning-datasources.yaml:ro
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    command: ["--config=/etc/otel-collector-config.yaml"]
