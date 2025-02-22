@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -33,6 +34,9 @@ func SetupHandlers(repository *repository.Repository) {
 	}), "RemoveResource"))
 }
 
-func Run(host string, port int) {
+func Run(
+	host string,
+	port int,
+	logger *slog.Logger) {
 	http.ListenAndServe(host+":"+strconv.Itoa(port), nil)
 }

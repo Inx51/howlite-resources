@@ -2,7 +2,6 @@ package main
 
 import (
 	"log/slog"
-	"os"
 
 	"github.com/joho/godotenv"
 
@@ -17,11 +16,11 @@ import (
 
 func main() {
 	application := NewApplication()
+	application.SetupConfiguration()
 	application.SetupOpenTelemetry()
 
-	application.logger.Info("Starting application")
+	application.logger.Info("Hello, world!")
 
-	application.SetupConfiguration()
 	application.SetupStorage()
 	application.SetupRepository()
 	application.SetupHandlers()
@@ -42,8 +41,6 @@ func NewApplication() *Application {
 
 func (app *Application) SetupConfiguration() {
 
-	app.logger.Info("Setting up configurations")
-
 	godotenv.Overload(".env", ".env.local")
 
 	config := config.Configuration{}
@@ -52,16 +49,11 @@ func (app *Application) SetupConfiguration() {
 }
 
 func (app *Application) SetupOpenTelemetry() {
-
-	serviceName, exists := os.LookupEnv("HOWLITE_SERVICE_NAME")
-	if !exists {
-		serviceName = "Howlite.Resrouces"
-	}
-	app.logger = telemetry.CreateOpenTelemetryLogger(serviceName)
+	app.logger = telemetry.CreateOpenTelemetryLogger(app.config.OTEL)
 }
 
 func (app *Application) SetupStorage() {
-	app.storage = filesystem.NewStorage(app.config.Path)
+	app.storage = filesystem.NewStorage(app.config.PATH)
 }
 
 func (app *Application) SetupRepository() {
@@ -73,5 +65,5 @@ func (app *Application) SetupHandlers() {
 }
 
 func (app *Application) Run() {
-	api.Run(app.config.Host, app.config.Port)
+	api.Run(app.config.HOST, app.config.PORT, app.logger)
 }
