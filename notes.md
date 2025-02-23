@@ -1,5 +1,10 @@
 #TODO
 * Add logging to services and handlers
+* Add formatters
+    * Allow us to set formatter based on env-variable
+        * For JSON
+        * For Dev
+            * Include file-name, method-name, linennumber?
 * Add Spans/activities
 * Validate spans and activies in Grafana
 * Add metrics
