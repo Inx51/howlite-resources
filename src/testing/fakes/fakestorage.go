@@ -80,6 +80,10 @@ func (storage *FakeStorage) AddTestResource(identifier string, headers map[strin
 	return nil
 }
 
+func (storage *FakeStorage) GetName() string {
+	return "FakeStorage"
+}
+
 func (storage *FakeStorage) RemoveResource(resourceIdentifier *resource.ResourceIdentifier) error {
 	delete(storage.storage, *resourceIdentifier.Value)
 	return nil

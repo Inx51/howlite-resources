@@ -7,6 +7,7 @@ import (
 )
 
 type Storage interface {
+	GetName() string
 	RemoveResource(resourceIdentifier *resource.ResourceIdentifier) error
 	NewResourceWriter(resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error)
 	ResourceExists(resourceIdentifier *resource.ResourceIdentifier) (bool, error)

@@ -1,6 +1,7 @@
 package utilities
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/inx51/howlite/resources/resource/repository"
@@ -8,13 +9,10 @@ import (
 	"github.com/inx51/howlite/resources/testing/utilities/tester"
 )
 
-func CreateHandlerParameters(tester *tester.Tester, storage storage.Storage) (http.ResponseWriter, *http.Request, *repository.Repository) {
+func CreateHandlerParameters(tester *tester.Tester, storage storage.Storage) (http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger) {
 	resp, req := tester.Build()
-	repo := createRepository(storage)
+	logger := slog.New(slog.NewTextHandler(nil, nil))
+	repo := repository.NewRepository(&storage, logger)
 
-	return resp, req, repo
-}
-
-func createRepository(storage storage.Storage) *repository.Repository {
-	return repository.NewRepository(&storage)
+	return resp, req, repo, logger
 }

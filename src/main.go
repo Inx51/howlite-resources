@@ -18,9 +18,6 @@ func main() {
 	application := NewApplication()
 	application.SetupConfiguration()
 	application.SetupOpenTelemetry()
-
-	application.logger.Info("Hello, world!")
-
 	application.SetupStorage()
 	application.SetupRepository()
 	application.SetupHandlers()
@@ -53,15 +50,17 @@ func (app *Application) SetupOpenTelemetry() {
 }
 
 func (app *Application) SetupStorage() {
-	app.storage = filesystem.NewStorage(app.config.PATH)
+	app.logger.Debug("Trying to setup storage")
+	app.storage = filesystem.NewStorage(app.config.PATH, app.logger)
+	app.logger.Info("Setup storage provider", "provider", app.storage.GetName())
 }
 
 func (app *Application) SetupRepository() {
-	app.repository = repository.NewRepository(&app.storage)
+	app.repository = repository.NewRepository(&app.storage, app.logger)
 }
 
 func (app *Application) SetupHandlers() {
-	api.SetupHandlers(app.repository)
+	api.SetupHandlers(app.repository, app.logger)
 }
 
 func (app *Application) Run() {

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/inx51/howlite/resources/api/handler/services"
@@ -8,7 +9,11 @@ import (
 	"github.com/inx51/howlite/resources/resource/repository"
 )
 
-func CreateResource(resp http.ResponseWriter, req *http.Request, repository *repository.Repository) {
+func CreateResource(
+	resp http.ResponseWriter,
+	req *http.Request,
+	repository *repository.Repository,
+	logger *slog.Logger) {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
 	resourceExists, existsErr := repository.ResourceExists(resourceIdentifier)
