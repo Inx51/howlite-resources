@@ -14,24 +14,25 @@ func GetResource(
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
-	logger *slog.Logger) {
+	logger *slog.Logger) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
-	resourceExists, existsErr := repository.ResourceExists(resourceIdentifier)
-	if existsErr != nil {
+	resourceExists, err := repository.ResourceExists(resourceIdentifier)
+	if err != nil {
 		resp.WriteHeader(500)
-		panic(existsErr)
+		return err
 	}
 
 	if !resourceExists {
+		logger.Debug("Failed to get resource since it does not exist", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(404)
-		return
+		return nil
 	}
 
 	resource, err := repository.GetResource(resourceIdentifier)
 	if err != nil {
 		resp.WriteHeader(500)
-		panic(err)
+		return err
 	}
 
 	for k, v := range *resource.Headers {
@@ -44,4 +45,6 @@ func GetResource(
 	body := *resource.Body
 	io.CopyBuffer(resp, body, buff)
 	body.Close()
+	logger.Debug("Resource returned", "resourceIdentifier", resourceIdentifier.Value)
+	return nil
 }

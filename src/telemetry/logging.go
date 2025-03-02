@@ -3,12 +3,14 @@ package telemetry
 import (
 	"context"
 	"log/slog"
+	"os"
 
 	"github.com/inx51/howlite/resources/config"
+	"github.com/phsym/console-slog"
+	slogmulti "github.com/samber/slog-multi"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
-	"go.opentelemetry.io/otel/exporters/stdout/stdoutlog"
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -16,11 +18,6 @@ import (
 )
 
 func CreateOpenTelemetryLogger(conf config.OtelConfiguration) *slog.Logger {
-	stdoutExporter, err := stdoutlog.New()
-	if err != nil {
-		panic(err)
-	}
-
 	ctx := context.Background()
 
 	otlpExporter, err := getOtlLogExporter(ctx, conf)
@@ -29,14 +26,21 @@ func CreateOpenTelemetryLogger(conf config.OtelConfiguration) *slog.Logger {
 	}
 
 	loggerProvider := log.NewLoggerProvider(
-		log.WithProcessor(log.NewBatchProcessor(stdoutExporter)),
 		log.WithProcessor(log.NewBatchProcessor(otlpExporter)),
 		log.WithResource(resource.NewWithAttributes(semconv.SchemaURL)),
 	)
 
 	global.SetLoggerProvider(loggerProvider)
 
-	return otelslog.NewLogger(conf.OTEL_SERVICE_NAME)
+	var handlers []slog.Handler
+
+	if conf.DEV_MODE {
+		handlers = append(handlers, console.NewHandler(os.Stderr, &console.HandlerOptions{Level: slog.LevelDebug}))
+	}
+
+	handlers = append(handlers, otelslog.NewHandler(conf.OTEL_SERVICE_NAME))
+
+	return slog.New(slogmulti.Fanout(handlers...))
 }
 
 func getOtlLogExporter(ctx context.Context, conf config.OtelConfiguration) (log.Exporter, error) {

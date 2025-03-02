@@ -1,9 +1,10 @@
-package handler
+package handler_test
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/inx51/howlite/resources/api/handler"
 	"github.com/inx51/howlite/resources/testing/fakes"
 	"github.com/inx51/howlite/resources/testing/utilities"
 	"github.com/inx51/howlite/resources/testing/utilities/tester"
@@ -23,7 +24,7 @@ func TestReplaceShouldReturnCreatedStatusWhenNewResourceCreated(t *testing.T) {
 		`,
 	)
 
-	ReplaceResource(utilities.CreateHandlerParameters(tester, fakes.NewStorage()))
+	handler.ReplaceResource(utilities.CreateHandlerParameters(tester, fakes.NewStorage()))
 	tester.PopulateResponse()
 
 	assert.Equal(t, 201, tester.Response.StatusCode)
@@ -42,7 +43,7 @@ func TestReplaceShouldReturnLocationHeaderWhenNewResourceCreated(t *testing.T) {
 		`,
 	)
 
-	ReplaceResource(utilities.CreateHandlerParameters(tester, fakes.NewStorage()))
+	handler.ReplaceResource(utilities.CreateHandlerParameters(tester, fakes.NewStorage()))
 	tester.PopulateResponse()
 
 	assert.NotNil(t, tester.Response.Headers.Get("Location"))
@@ -66,7 +67,7 @@ func TestReplaceShouldReturnNoContentWhenResourceReplaced(t *testing.T) {
 		`,
 	)
 
-	ReplaceResource(utilities.CreateHandlerParameters(tester, storage))
+	handler.ReplaceResource(utilities.CreateHandlerParameters(tester, storage))
 	tester.PopulateResponse()
 
 	assert.Equal(t, 204, tester.Response.StatusCode)
@@ -89,7 +90,7 @@ func TestReplaceShouldReturnLocationHeaderWhenResourceReplaced(t *testing.T) {
 		`,
 	)
 
-	ReplaceResource(utilities.CreateHandlerParameters(tester, storage))
+	handler.ReplaceResource(utilities.CreateHandlerParameters(tester, storage))
 	tester.PopulateResponse()
 
 	assert.NotNil(t, tester.Response.Headers.Get("Location"))

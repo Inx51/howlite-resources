@@ -1,12 +1,16 @@
-package services
+package services_test
 
 import (
+	"log/slog"
 	"testing"
 
+	"github.com/inx51/howlite/resources/resource/services"
+	"github.com/inx51/howlite/resources/testing/utilities"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldFilterOutInvalidResponseHeaders(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(&utilities.TestingLogWriter{}, nil))
 	expected := map[string][]string{
 		"Content-Type": {"application/json"},
 		"X-Custom":     {"custom-value"},
@@ -24,12 +28,13 @@ func TestShouldFilterOutInvalidResponseHeaders(t *testing.T) {
 		destination[k] = v
 	}
 
-	filtered := FilterForValidResponseHeaders(&destination)
+	filtered := services.FilterForValidResponseHeaders(&destination, logger)
 
 	assert.Equal(t, expected, *filtered)
 }
 
 func TestShouldAllowHeadersThatsNotInvalid(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(&utilities.TestingLogWriter{}, nil))
 	testHeaders := map[string][]string{
 		"X-MyHeader":     {"abcd"},
 		"Content-Length": {"123"},
@@ -40,12 +45,13 @@ func TestShouldAllowHeadersThatsNotInvalid(t *testing.T) {
 		"Content-Length": {"123"},
 	}
 
-	filtered := FilterForValidResponseHeaders(&testHeaders)
+	filtered := services.FilterForValidResponseHeaders(&testHeaders, logger)
 
 	assert.Equal(t, expected, *filtered)
 }
 
 func TestShouldPassIfAllProvidedHeadersAreInvalid(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(&utilities.TestingLogWriter{}, nil))
 	testHeaders := map[string][]string{
 		"host":            {"127.0.0.1"},
 		"accept-encoding": {"deflate"},
@@ -57,7 +63,7 @@ func TestShouldPassIfAllProvidedHeadersAreInvalid(t *testing.T) {
 
 	expected := map[string][]string{}
 
-	filtered := FilterForValidResponseHeaders(&testHeaders)
+	filtered := services.FilterForValidResponseHeaders(&testHeaders, logger)
 
 	assert.Equal(t, expected, *filtered)
 }

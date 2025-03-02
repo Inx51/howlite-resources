@@ -28,7 +28,11 @@ func (repository *Repository) GetResource(resourceIdentifier *resource.ResourceI
 		return nil, err
 	}
 
-	headers := services.GetHeadersFromStream(&resourceStream)
+	headers, err := services.GetHeadersFromStream(&resourceStream)
+	if err != nil {
+		repository.logger.Error("Failed to get resource headers", "resourceIdentifier", resourceIdentifier.Value, "error", err)
+		return nil, err
+	}
 	resource := resource.NewResource(resourceIdentifier, headers, &resourceStream)
 	repository.logger.Debug("Successfully got resource", "resourceIdentifier", resourceIdentifier.Value)
 	return resource, nil
@@ -53,11 +57,19 @@ func (repository *Repository) SaveResource(resource *resource.Resource) error {
 		return err
 	}
 	//Write headers
-	headers := services.FilterForValidResponseHeaders(resource.Headers)
-	services.WriteHeaders(&resourceStream, headers)
+	headers := services.FilterForValidResponseHeaders(resource.Headers, repository.logger)
+	err = services.WriteHeaders(&resourceStream, headers)
+	if err != nil {
+		repository.logger.Error("Failed to write headers", "resourceIdentifier", resource.Identifier.Value, "error", err)
+		return err
+	}
 
 	//Write body
-	services.WriteBody(&resourceStream, resource.Body)
+	err = services.WriteBody(&resourceStream, resource.Body)
+	if err != nil {
+		repository.logger.Error("Failed to write resource body", "resourceIdentifier", resource.Identifier.Value, "error", err)
+		return err
+	}
 
 	repository.logger.Info("Saved resource", "resourceIdentifier", resource.Identifier.Value)
 

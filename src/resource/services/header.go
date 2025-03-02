@@ -3,17 +3,19 @@ package services
 import (
 	"encoding/binary"
 	"io"
+	"log/slog"
 	"slices"
 	"strings"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func FilterForValidResponseHeaders(headers *map[string][]string) *map[string][]string {
+func FilterForValidResponseHeaders(headers *map[string][]string, logger *slog.Logger) *map[string][]string {
 	forbiddenHeaders := []string{"host", "accept-encoding", "connection", "accepts", "user-agent", "authorization"}
 	var result = make(map[string][]string)
 	for k, v := range *headers {
 		if slices.Contains(forbiddenHeaders, strings.ToLower(k)) {
+			logger.Debug("Header filtered", "header", k)
 			continue
 		}
 
@@ -23,7 +25,7 @@ func FilterForValidResponseHeaders(headers *map[string][]string) *map[string][]s
 	return &result
 }
 
-func WriteHeaders(streamRef *io.WriteCloser, headers *map[string][]string) {
+func WriteHeaders(streamRef *io.WriteCloser, headers *map[string][]string) error {
 	stream := *streamRef
 	headersLength := len(*headers)
 	if headersLength == 0 {
@@ -31,40 +33,44 @@ func WriteHeaders(streamRef *io.WriteCloser, headers *map[string][]string) {
 	} else {
 		msgPackedHeaders, err := msgpack.Marshal(headers)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		headersMsgPackLength := len(msgPackedHeaders)
 		binary.Write(stream, binary.LittleEndian, uint64(headersMsgPackLength))
 		stream.Write(msgPackedHeaders)
 	}
+	return nil
 }
 
-func GetHeadersFromStream(stream *io.ReadCloser) *map[string][]string {
+func GetHeadersFromStream(stream *io.ReadCloser) (*map[string][]string, error) {
 	var headers map[string][]string
-	headersLength := getHeadersLengthFromStream(stream)
+	headersLength, err := getHeadersLengthFromStream(stream)
+	if err != nil {
+		return nil, err
+	}
 	if headersLength == 0 {
-		return &headers
+		return &headers, nil
 	}
 	headersBytes := make([]byte, headersLength)
-	_, err := (*stream).Read(headersBytes)
+	_, err = (*stream).Read(headersBytes)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = msgpack.Unmarshal(headersBytes, &headers)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return &headers
+	return &headers, nil
 }
 
-func getHeadersLengthFromStream(stream *io.ReadCloser) uint64 {
+func getHeadersLengthFromStream(stream *io.ReadCloser) (uint64, error) {
 	headerLengthBytes := make([]byte, 8)
 	_, err := (*stream).Read(headerLengthBytes)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 
-	return binary.LittleEndian.Uint64(headerLengthBytes)
+	return binary.LittleEndian.Uint64(headerLengthBytes), nil
 }

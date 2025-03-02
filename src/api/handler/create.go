@@ -13,18 +13,19 @@ func CreateResource(
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
-	logger *slog.Logger) {
+	logger *slog.Logger) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
-	resourceExists, existsErr := repository.ResourceExists(resourceIdentifier)
-	if existsErr != nil {
+	resourceExists, err := repository.ResourceExists(resourceIdentifier)
+	if err != nil {
 		resp.WriteHeader(500)
-		panic(existsErr)
+		return err
 	}
 
 	if resourceExists {
+		logger.Debug("Can't create resource with the given identifier because it already exists", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(409)
-		return
+		return nil
 	}
 
 	headers := make(map[string][]string)
@@ -33,12 +34,15 @@ func CreateResource(
 	}
 
 	resource := resource.NewResource(resourceIdentifier, &headers, &req.Body)
-	err := repository.SaveResource(resource)
+	err = repository.SaveResource(resource)
 	if err != nil {
-		panic(err)
+		resp.WriteHeader(500)
+		return err
 	}
 
 	location := services.GetRequestUrl(req)
 	resp.Header().Add("Location", location)
 	resp.WriteHeader(201)
+	logger.Debug("Resource created", "resourceIdentifier", resourceIdentifier.Value)
+	return nil
 }

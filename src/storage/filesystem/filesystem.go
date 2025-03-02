@@ -41,7 +41,7 @@ func (fileSystem *FileSystem) RemoveResource(resourceIdentifier *resource.Resour
 
 func (fileSystem *FileSystem) NewResourceWriter(resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error) {
 	path := fileSystem.resourcePath(*resourceIdentifier)
-	fileSystem.logger.Debug("Trying to cretae new writer for resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
+	fileSystem.logger.Debug("Trying to create new writer for resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
 	writer, err := os.Create(path)
 	if err != nil {
 		fileSystem.logger.Error("Failed to create new writer for resource file", "resourceIdentifier", resourceIdentifier.Value, "path", path, "error", err)

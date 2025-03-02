@@ -1,5 +1,7 @@
 #TODO
-* Add logging to services and handlers
+* Add logging to handlers
+* Handle "bubbled" errors..
+* Only enable OTLP exporter given that environment variables are set
 * Add formatters
     * Allow us to set formatter based on env-variable
         * For JSON

@@ -11,7 +11,7 @@ import (
 
 func CreateHandlerParameters(tester *tester.Tester, storage storage.Storage) (http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger) {
 	resp, req := tester.Build()
-	logger := slog.New(slog.NewTextHandler(nil, nil))
+	logger := slog.New(slog.NewTextHandler(&TestingLogWriter{}, nil))
 	repo := repository.NewRepository(&storage, logger)
 
 	return resp, req, repo, logger

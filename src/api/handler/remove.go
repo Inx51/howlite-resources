@@ -12,24 +12,27 @@ func RemoveResource(
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
-	logger *slog.Logger) {
+	logger *slog.Logger) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
-	resourceExists, existsErr := repository.ResourceExists(resourceIdentifier)
-	if existsErr != nil {
+	resourceExists, err := repository.ResourceExists(resourceIdentifier)
+	if err != nil {
 		resp.WriteHeader(500)
-		panic(existsErr)
+		return err
 	}
 
 	if !resourceExists {
+		logger.Debug("Failed to remove resource since it does not exist", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(404)
-		return
+		return nil
 	}
 
-	err := repository.RemoveResource(resourceIdentifier)
+	err = repository.RemoveResource(resourceIdentifier)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	resp.WriteHeader(204)
+	logger.Debug("Removed resource", "resourceIdentifier", resourceIdentifier.Value)
+	return nil
 }

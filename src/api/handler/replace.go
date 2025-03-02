@@ -13,12 +13,12 @@ func ReplaceResource(
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
-	logger *slog.Logger) {
+	logger *slog.Logger) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
-	resourceExists, existsErr := repository.ResourceExists(resourceIdentifier)
-	if existsErr != nil {
-		panic(existsErr)
+	resourceExists, err := repository.ResourceExists(resourceIdentifier)
+	if err != nil {
+		return err
 	}
 
 	headers := make(map[string][]string)
@@ -27,16 +27,19 @@ func ReplaceResource(
 	}
 
 	resource := resource.NewResource(resourceIdentifier, &headers, &req.Body)
-	saveErr := repository.SaveResource(resource)
-	if saveErr != nil {
-		panic(saveErr)
+	err = repository.SaveResource(resource)
+	if err != nil {
+		return err
 	}
 
 	location := services.GetRequestUrl(req)
 	resp.Header().Add("Location", location)
 	if !resourceExists {
+		logger.Debug("Resource created", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(201)
 	} else {
+		logger.Debug("Existing resource replaced", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(204)
 	}
+	return nil
 }
