@@ -6,13 +6,15 @@ import (
 
 	"github.com/inx51/howlite/resources/resource"
 	"github.com/inx51/howlite/resources/resource/repository"
+	"go.opentelemetry.io/otel/sdk/metric"
 )
 
 func RemoveResource(
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
-	logger *slog.Logger) error {
+	logger *slog.Logger,
+	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
 	resourceExists, err := repository.ResourceExists(resourceIdentifier)
@@ -33,6 +35,6 @@ func RemoveResource(
 	}
 
 	resp.WriteHeader(204)
-	logger.Debug("Removed resource", "resourceIdentifier", resourceIdentifier.Value)
+	logger.Info("Removed resource", "resourceIdentifier", resourceIdentifier.Value)
 	return nil
 }

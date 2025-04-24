@@ -3,11 +3,9 @@ package telemetry
 import (
 	"context"
 	"log/slog"
-	"os"
+	"strings"
 
 	"github.com/inx51/howlite/resources/config"
-	"github.com/phsym/console-slog"
-	slogmulti "github.com/samber/slog-multi"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
@@ -20,7 +18,7 @@ import (
 func CreateOpenTelemetryLogger(conf config.OtelConfiguration) *slog.Logger {
 	ctx := context.Background()
 
-	otlpExporter, err := getOtlLogExporter(ctx, conf)
+	otlpExporter, err := getOtlpLogExporter(ctx, conf)
 	if err != nil {
 		panic(err)
 	}
@@ -32,24 +30,16 @@ func CreateOpenTelemetryLogger(conf config.OtelConfiguration) *slog.Logger {
 
 	global.SetLoggerProvider(loggerProvider)
 
-	var handlers []slog.Handler
-
-	if conf.DEV_MODE {
-		handlers = append(handlers, console.NewHandler(os.Stderr, &console.HandlerOptions{Level: slog.LevelDebug}))
-	}
-
-	handlers = append(handlers, otelslog.NewHandler(conf.OTEL_SERVICE_NAME))
-
-	return slog.New(slogmulti.Fanout(handlers...))
+	return slog.New(otelslog.NewHandler(conf.OTEL_SERVICE_NAME))
 }
 
-func getOtlLogExporter(ctx context.Context, conf config.OtelConfiguration) (log.Exporter, error) {
+func getOtlpLogExporter(ctx context.Context, conf config.OtelConfiguration) (log.Exporter, error) {
 	protocol := conf.OTEL_EXPORTER_OTLP_PROTOCOL
 	if conf.OTEL_EXPORTER_OTLP_LOGS_PROTOCOL != "" {
 		protocol = conf.OTEL_EXPORTER_OTLP_LOGS_PROTOCOL
 	}
 
-	if protocol == "http" {
+	if strings.HasPrefix(protocol, "http") {
 		return otlploghttp.New(ctx)
 	}
 

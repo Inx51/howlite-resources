@@ -35,7 +35,7 @@ func (fileSystem *FileSystem) RemoveResource(resourceIdentifier *resource.Resour
 		fileSystem.logger.Debug("Removing resource file failed with unhandled error", "resourceIdentifier", resourceIdentifier.Value, "file", path, "error", err)
 		return err
 	}
-	fileSystem.logger.Debug("Successfully removed resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
+	fileSystem.logger.Info("Successfully removed resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
 	return nil
 }
 
@@ -58,7 +58,7 @@ func (fileSystem *FileSystem) ResourceExists(resourceIdentifier *resource.Resour
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			fileSystem.logger.Debug("Could not find resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
-			return false, err
+			return false, nil
 		}
 		fileSystem.logger.Error("Failed to find resource with unhandled error", "error", err)
 		return false, err

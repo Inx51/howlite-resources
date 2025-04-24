@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"strings"
 
 	"github.com/inx51/howlite/resources/config"
 	"go.opentelemetry.io/otel"
@@ -14,19 +15,19 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
-func CreateOpenTelemetryTracing(conf config.OtelConfiguration) *trace.TracerProvider {
+func CreateOpenTelemetryTracer(conf config.OtelConfiguration) *trace.TracerProvider {
 	consoleExporter, err := stdouttrace.New(stdouttrace.WithPrettyPrint())
 	if err != nil {
 		panic(err)
 	}
 
 	ctx := context.Background()
-	otlpExporter, err := getOtlTraceExporter(ctx, conf)
+	otlpExporter, err := getOtlpTraceExporter(ctx, conf)
 	if err != nil {
 		panic(err)
 	}
 
-	tp := trace.NewTracerProvider(
+	tracerProvider := trace.NewTracerProvider(
 		trace.WithBatcher(consoleExporter),
 		trace.WithBatcher(otlpExporter),
 		trace.WithResource(resource.NewWithAttributes(
@@ -35,18 +36,18 @@ func CreateOpenTelemetryTracing(conf config.OtelConfiguration) *trace.TracerProv
 		)),
 	)
 
-	otel.SetTracerProvider(tp)
+	otel.SetTracerProvider(tracerProvider)
 
-	return tp
+	return tracerProvider
 }
 
-func getOtlTraceExporter(ctx context.Context, conf config.OtelConfiguration) (*otlptrace.Exporter, error) {
+func getOtlpTraceExporter(ctx context.Context, conf config.OtelConfiguration) (*otlptrace.Exporter, error) {
 	protocol := conf.OTEL_EXPORTER_OTLP_PROTOCOL
 	if conf.OTEL_EXPORTER_OTLP_TRACES_PROTOCOL != "" {
 		protocol = conf.OTEL_EXPORTER_OTLP_TRACES_PROTOCOL
 	}
 
-	if protocol == "http" {
+	if strings.HasPrefix(protocol, "http") {
 		return otlptracehttp.New(ctx)
 	}
 

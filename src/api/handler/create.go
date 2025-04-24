@@ -7,13 +7,15 @@ import (
 	"github.com/inx51/howlite/resources/api/handler/services"
 	"github.com/inx51/howlite/resources/resource"
 	"github.com/inx51/howlite/resources/resource/repository"
+	"go.opentelemetry.io/otel/sdk/metric"
 )
 
 func CreateResource(
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
-	logger *slog.Logger) error {
+	logger *slog.Logger,
+	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
 	resourceExists, err := repository.ResourceExists(resourceIdentifier)
@@ -43,6 +45,6 @@ func CreateResource(
 	location := services.GetRequestUrl(req)
 	resp.Header().Add("Location", location)
 	resp.WriteHeader(201)
-	logger.Debug("Resource created", "resourceIdentifier", resourceIdentifier.Value)
+	logger.Info("Resource created", "resourceIdentifier", resourceIdentifier.Value)
 	return nil
 }

@@ -1,12 +1,4 @@
 #TODO
-* Add logging to handlers
-* Handle "bubbled" errors..
-* Only enable OTLP exporter given that environment variables are set
-* Add formatters
-    * Allow us to set formatter based on env-variable
-        * For JSON
-        * For Dev
-            * Include file-name, method-name, linennumber?
 * Add Spans/activities
 * Validate spans and activies in Grafana
 * Add metrics
@@ -17,3 +9,4 @@
     * Add whatever GCE uses..
 * Add events to be published on Create,Remove,Update using Kafka
     * Write tests for events
+* WHEN DISTRIBUTING THIS AS A DOCKER IMAGE, THIRD-PARTY LICENSES ARE REQUIRED TO BE INCLUDED IN THAT IMAGE!!!

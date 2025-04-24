@@ -8,6 +8,7 @@ import (
 	"github.com/inx51/howlite/resources/api/handler"
 	"github.com/inx51/howlite/resources/resource/repository"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/sdk/metric"
 )
 
 type Endpoint struct {
@@ -16,9 +17,12 @@ type Endpoint struct {
 	Handler     Handler
 }
 
-type Handler func(http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger) error
+type Handler func(http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger, *metric.MeterProvider) error
 
-func SetupHandlers(repository *repository.Repository, logger *slog.Logger) {
+func SetupHandlers(
+	repository *repository.Repository,
+	logger *slog.Logger,
+	meter *metric.MeterProvider) {
 
 	endpoints := []Endpoint{
 		{
@@ -56,7 +60,12 @@ func SetupHandlers(repository *repository.Repository, logger *slog.Logger) {
 				func(resp http.ResponseWriter, req *http.Request) {
 					logger.Info("Request received", "method", req.Method, "url", req.URL.Path)
 					logger.Debug("Found matching endpoint route", "method", endpoint.Method, "path", req.URL.Path)
-					err := endpoint.Handler(resp, req, repository, logger)
+					err := endpoint.Handler(
+						resp,
+						req,
+						repository,
+						logger,
+						meter)
 					if err != nil {
 						logger.Error("Unhandled error occurred", "error", err)
 					} else {

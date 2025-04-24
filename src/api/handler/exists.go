@@ -7,13 +7,15 @@ import (
 
 	"github.com/inx51/howlite/resources/resource"
 	"github.com/inx51/howlite/resources/resource/repository"
+	"go.opentelemetry.io/otel/sdk/metric"
 )
 
 func ResourceExists(
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
-	logger *slog.Logger) error {
+	logger *slog.Logger,
+	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 	exists, err := repository.ResourceExists(resourceIdentifier)
 	if err != nil {

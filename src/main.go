@@ -4,6 +4,8 @@ import (
 	"log/slog"
 
 	"github.com/joho/godotenv"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/inx51/howlite/resources/api"
@@ -30,6 +32,8 @@ type Application struct {
 	storage    storage.Storage
 	config     *config.Configuration
 	logger     *slog.Logger
+	tracer     *trace.TracerProvider
+	meter      *metric.MeterProvider
 }
 
 func NewApplication() *Application {
@@ -47,6 +51,8 @@ func (app *Application) SetupConfiguration() {
 
 func (app *Application) SetupOpenTelemetry() {
 	app.logger = telemetry.CreateOpenTelemetryLogger(app.config.OTEL)
+	app.tracer = telemetry.CreateOpenTelemetryTracer(app.config.OTEL)
+	app.meter = telemetry.CreateOpenTelemetryMeter(app.config.OTEL)
 }
 
 func (app *Application) SetupStorage() {
@@ -60,7 +66,10 @@ func (app *Application) SetupRepository() {
 }
 
 func (app *Application) SetupHandlers() {
-	api.SetupHandlers(app.repository, app.logger)
+	api.SetupHandlers(
+		app.repository,
+		app.logger,
+		app.meter)
 }
 
 func (app *Application) Run() {
