@@ -3,6 +3,7 @@ package telemetry
 import (
 	"context"
 	"log/slog"
+	"os"
 	"strings"
 
 	"github.com/inx51/howlite/resources/config"
@@ -18,6 +19,11 @@ import (
 func CreateOpenTelemetryLogger(conf config.OtelConfiguration) *slog.Logger {
 	ctx := context.Background()
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "unknown"
+	}
+
 	otlpExporter, err := getOtlpLogExporter(ctx, conf)
 	if err != nil {
 		panic(err)
@@ -25,7 +31,11 @@ func CreateOpenTelemetryLogger(conf config.OtelConfiguration) *slog.Logger {
 
 	loggerProvider := log.NewLoggerProvider(
 		log.WithProcessor(log.NewBatchProcessor(otlpExporter)),
-		log.WithResource(resource.NewWithAttributes(semconv.SchemaURL)),
+		log.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(conf.OTEL_SERVICE_NAME),
+			semconv.ProcessPID(os.Getpid()),
+			semconv.HostNameKey.String(hostname))),
 	)
 
 	global.SetLoggerProvider(loggerProvider)

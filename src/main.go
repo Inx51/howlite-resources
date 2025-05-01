@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/joho/godotenv"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/trace"
+	oteltrace "go.opentelemetry.io/otel/trace"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/inx51/howlite/resources/api"
@@ -19,12 +21,14 @@ import (
 func main() {
 	application := NewApplication()
 	application.SetupConfiguration()
-	application.SetupOpenTelemetry()
-	application.SetupStorage()
+	ctx, span := application.SetupOpenTelemetry()
+	defer span.End()
+
+	application.SetupStorageWithContext(ctx)
 	application.SetupRepository()
 	application.SetupHandlers()
 
-	application.Run()
+	application.RunWithContext(ctx)
 }
 
 type Application struct {
@@ -49,16 +53,18 @@ func (app *Application) SetupConfiguration() {
 	app.config = &config
 }
 
-func (app *Application) SetupOpenTelemetry() {
+func (app *Application) SetupOpenTelemetry() (context.Context, oteltrace.Span) {
 	app.logger = telemetry.CreateOpenTelemetryLogger(app.config.OTEL)
 	app.tracer = telemetry.CreateOpenTelemetryTracer(app.config.OTEL)
 	app.meter = telemetry.CreateOpenTelemetryMeter(app.config.OTEL)
+
+	return app.tracer.Tracer("main").Start(context.Background(), "main")
 }
 
-func (app *Application) SetupStorage() {
-	app.logger.Debug("Trying to setup storage")
+func (app *Application) SetupStorageWithContext(ctx context.Context) {
+	app.logger.DebugContext(ctx, "Trying to setup storage")
 	app.storage = filesystem.NewStorage(app.config.PATH, app.logger)
-	app.logger.Info("Setup storage provider", "provider", app.storage.GetName())
+	app.logger.InfoContext(ctx, "Setup storage provider", "provider", app.storage.GetName())
 }
 
 func (app *Application) SetupRepository() {
@@ -72,6 +78,6 @@ func (app *Application) SetupHandlers() {
 		app.meter)
 }
 
-func (app *Application) Run() {
-	api.Run(app.config.HOST, app.config.PORT, app.logger)
+func (app *Application) RunWithContext(ctx context.Context) {
+	api.RunWithContext(ctx, app.config.HOST, app.config.PORT, app.logger)
 }

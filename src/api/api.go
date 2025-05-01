@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -12,12 +13,12 @@ import (
 )
 
 type Endpoint struct {
-	Method      string
-	Description string
-	Handler     Handler
+	Method             string
+	Description        string
+	HandlerWithContext Handler
 }
 
-type Handler func(http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger, *metric.MeterProvider) error
+type Handler func(context.Context, http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger, *metric.MeterProvider) error
 
 func SetupHandlers(
 	repository *repository.Repository,
@@ -26,29 +27,29 @@ func SetupHandlers(
 
 	endpoints := []Endpoint{
 		{
-			Method:      "GET",
-			Description: "GetResource",
-			Handler:     handler.GetResource,
+			Method:             "GET",
+			Description:        "GetResource",
+			HandlerWithContext: handler.GetResource,
 		},
 		{
-			Method:      "POST",
-			Description: "CreateResource",
-			Handler:     handler.CreateResource,
+			Method:             "POST",
+			Description:        "CreateResource",
+			HandlerWithContext: handler.CreateResource,
 		},
 		{
-			Method:      "HEAD",
-			Description: "ResourceExists",
-			Handler:     handler.ResourceExists,
+			Method:             "HEAD",
+			Description:        "ResourceExists",
+			HandlerWithContext: handler.ResourceExists,
 		},
 		{
-			Method:      "PUT",
-			Description: "ReplaceResource",
-			Handler:     handler.ReplaceResource,
+			Method:             "PUT",
+			Description:        "ReplaceResource",
+			HandlerWithContext: handler.ReplaceResource,
 		},
 		{
-			Method:      "DELETE",
-			Description: "RemoveResource",
-			Handler:     handler.RemoveResource,
+			Method:             "DELETE",
+			Description:        "RemoveResource",
+			HandlerWithContext: handler.RemoveResource,
 		},
 	}
 
@@ -58,18 +59,22 @@ func SetupHandlers(
 		http.Handle(endpoint.Method+" /", otelhttp.NewHandler(
 			http.HandlerFunc(
 				func(resp http.ResponseWriter, req *http.Request) {
-					logger.Info("Request received", "method", req.Method, "url", req.URL.Path)
-					logger.Debug("Found matching endpoint route", "method", endpoint.Method, "path", req.URL.Path)
-					err := endpoint.Handler(
+					// Extract the span from the request's context
+					ctx := req.Context()
+
+					logger.InfoContext(ctx, "Request received", "method", req.Method, "url", req.URL.Path)
+					logger.DebugContext(ctx, "Found matching endpoint route", "method", endpoint.Method, "path", req.URL.Path)
+					err := endpoint.HandlerWithContext(
+						ctx,
 						resp,
 						req,
 						repository,
 						logger,
 						meter)
 					if err != nil {
-						logger.Error("Unhandled error occurred", "error", err)
+						logger.ErrorContext(ctx, "Unhandled error occurred", "error", err)
 					} else {
-						logger.Info("Response sent", "method", req.Method, "url", req.URL.Path)
+						logger.InfoContext(ctx, "Response sent", "method", req.Method, "url", req.URL.Path)
 					}
 				},
 			),
@@ -78,10 +83,11 @@ func SetupHandlers(
 	}
 }
 
-func Run(
+func RunWithContext(
+	ctx context.Context,
 	host string,
 	port int,
 	logger *slog.Logger) {
-	logger.Info("Starting HTTP server", "host", host, "port", port)
+	logger.InfoContext(ctx, "Starting HTTP server", "host", host, "port", port)
 	http.ListenAndServe(host+":"+strconv.Itoa(port), nil)
 }

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/inx51/howlite/resources/resource"
@@ -20,69 +21,69 @@ func NewRepository(storage *storage.Storage, logger *slog.Logger) *Repository {
 	}
 }
 
-func (repository *Repository) GetResource(resourceIdentifier *resource.ResourceIdentifier) (*resource.Resource, error) {
-	repository.logger.Debug("Trying to get resource", "resourceIdentifier", resourceIdentifier.Value)
-	resourceStream, err := repository.Storage.GetResource(resourceIdentifier)
+func (repository *Repository) GetResourceWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (*resource.Resource, error) {
+	repository.logger.DebugContext(ctx, "Trying to get resource", "resourceIdentifier", resourceIdentifier.Value)
+	resourceStream, err := repository.Storage.GetResourceWithContext(ctx, resourceIdentifier)
 	if err != nil {
-		repository.logger.Error("Failed to get resource", "resourceIdentifier", resourceIdentifier.Value, "error", err)
+		repository.logger.ErrorContext(ctx, "Failed to get resource", "resourceIdentifier", resourceIdentifier.Value, "error", err)
 		return nil, err
 	}
 
 	headers, err := services.GetHeadersFromStream(&resourceStream)
 	if err != nil {
-		repository.logger.Error("Failed to get resource headers", "resourceIdentifier", resourceIdentifier.Value, "error", err)
+		repository.logger.ErrorContext(ctx, "Failed to get resource headers", "resourceIdentifier", resourceIdentifier.Value, "error", err)
 		return nil, err
 	}
 	resource := resource.NewResource(resourceIdentifier, headers, &resourceStream)
-	repository.logger.Debug("Successfully got resource", "resourceIdentifier", resourceIdentifier.Value)
+	repository.logger.DebugContext(ctx, "Successfully got resource", "resourceIdentifier", resourceIdentifier.Value)
 	return resource, nil
 }
 
-func (repository *Repository) ResourceExists(resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
-	repository.logger.Debug("Trying to validate if resource exists", "resourceIdentifier", resourceIdentifier.Value)
-	exists, err := repository.Storage.ResourceExists(resourceIdentifier)
+func (repository *Repository) ResourceExistsWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
+	repository.logger.DebugContext(ctx, "Trying to validate if resource exists", "resourceIdentifier", resourceIdentifier.Value)
+	exists, err := repository.Storage.ResourceExistsWithContext(ctx, resourceIdentifier)
 	if err != nil {
-		repository.logger.Error("Failed to get resource", "resourceIdentifier", resourceIdentifier.Value, "error", err)
+		repository.logger.ErrorContext(ctx, "Failed to get resource", "resourceIdentifier", resourceIdentifier.Value, "error", err)
 		return false, err
 	}
-	repository.logger.Debug("Successfully validated if resource exists", "resourceIdentifier", resourceIdentifier.Value, "exists", exists)
+	repository.logger.DebugContext(ctx, "Successfully validated if resource exists", "resourceIdentifier", resourceIdentifier.Value, "exists", exists)
 	return exists, nil
 }
 
-func (repository *Repository) SaveResource(resource *resource.Resource) error {
-	repository.logger.Debug("Trying to save resource", "resourceIdentifier", resource.Identifier.Value)
-	resourceStream, err := repository.Storage.NewResourceWriter(resource.Identifier)
+func (repository *Repository) SaveResourceWithContext(ctx context.Context, resource *resource.Resource) error {
+	repository.logger.DebugContext(ctx, "Trying to save resource", "resourceIdentifier", resource.Identifier.Value)
+	resourceStream, err := repository.Storage.NewResourceWriterWithContext(ctx, resource.Identifier)
 	if err != nil {
-		repository.logger.Error("Failed to save resource", "resourceIdentifier", resource.Identifier.Value, "error", err)
+		repository.logger.ErrorContext(ctx, "Failed to save resource", "resourceIdentifier", resource.Identifier.Value, "error", err)
 		return err
 	}
 	//Write headers
-	headers := services.FilterForValidResponseHeaders(resource.Headers, repository.logger)
+	headers := services.FilterForValidResponseHeadersWithContext(ctx, resource.Headers, repository.logger)
 	err = services.WriteHeaders(&resourceStream, headers)
 	if err != nil {
-		repository.logger.Error("Failed to write headers", "resourceIdentifier", resource.Identifier.Value, "error", err)
+		repository.logger.ErrorContext(ctx, "Failed to write headers", "resourceIdentifier", resource.Identifier.Value, "error", err)
 		return err
 	}
 
 	//Write body
 	err = services.WriteBody(&resourceStream, resource.Body)
 	if err != nil {
-		repository.logger.Error("Failed to write resource body", "resourceIdentifier", resource.Identifier.Value, "error", err)
+		repository.logger.ErrorContext(ctx, "Failed to write resource body", "resourceIdentifier", resource.Identifier.Value, "error", err)
 		return err
 	}
 
-	repository.logger.Info("Saved resource", "resourceIdentifier", resource.Identifier.Value)
+	repository.logger.InfoContext(ctx, "Saved resource", "resourceIdentifier", resource.Identifier.Value)
 
 	return nil
 }
 
-func (repository *Repository) RemoveResource(resourceIdentifier *resource.ResourceIdentifier) error {
-	repository.logger.Debug("Trying to remove resource", "resourceIdentifier", resourceIdentifier.Value)
-	err := repository.Storage.RemoveResource(resourceIdentifier)
+func (repository *Repository) RemoveResourceWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
+	repository.logger.DebugContext(ctx, "Trying to remove resource", "resourceIdentifier", resourceIdentifier.Value)
+	err := repository.Storage.RemoveResourceWithContext(ctx, resourceIdentifier)
 	if err != nil {
-		repository.logger.Error("Failed to remove resource", "resourceIdentifier", resourceIdentifier.Value, "error", err)
+		repository.logger.ErrorContext(ctx, "Failed to remove resource", "resourceIdentifier", resourceIdentifier.Value, "error", err)
 		return err
 	}
-	repository.logger.Info("Removed resource", "resourceIdentifier", resourceIdentifier.Value)
+	repository.logger.InfoContext(ctx, "Removed resource", "resourceIdentifier", resourceIdentifier.Value)
 	return nil
 }

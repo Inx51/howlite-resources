@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"encoding/binary"
 	"io"
 	"log/slog"
@@ -10,7 +11,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func FilterForValidResponseHeaders(headers *map[string][]string, logger *slog.Logger) *map[string][]string {
+func FilterForValidResponseHeadersWithContext(ctx context.Context, headers *map[string][]string, logger *slog.Logger) *map[string][]string {
 	forbiddenHeaders := []string{"host", "accept-encoding", "connection", "accepts", "user-agent", "authorization"}
 	var result = make(map[string][]string)
 	for k, v := range *headers {

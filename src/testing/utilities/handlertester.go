@@ -1,6 +1,7 @@
 package utilities
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 
@@ -10,11 +11,11 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 )
 
-func CreateHandlerParameters(tester *tester.Tester, storage storage.Storage) (http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger, *metric.MeterProvider) {
+func CreateHandlerParameters(tester *tester.Tester, storage storage.Storage) (context.Context, http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger, *metric.MeterProvider) {
 	resp, req := tester.Build()
 	logger := slog.New(slog.NewTextHandler(&TestingLogWriter{}, nil))
 	repo := repository.NewRepository(&storage, logger)
 	meter := metric.NewMeterProvider()
 
-	return resp, req, repo, logger, meter
+	return context.Background(), resp, req, repo, logger, meter
 }

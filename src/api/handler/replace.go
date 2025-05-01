@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 
@@ -11,6 +12,7 @@ import (
 )
 
 func ReplaceResource(
+	ctx context.Context,
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
@@ -18,7 +20,7 @@ func ReplaceResource(
 	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
-	resourceExists, err := repository.ResourceExists(resourceIdentifier)
+	resourceExists, err := repository.ResourceExistsWithContext(ctx, resourceIdentifier)
 	if err != nil {
 		return err
 	}
@@ -29,7 +31,7 @@ func ReplaceResource(
 	}
 
 	resource := resource.NewResource(resourceIdentifier, &headers, &req.Body)
-	err = repository.SaveResource(resource)
+	err = repository.SaveResourceWithContext(ctx, resource)
 	if err != nil {
 		return err
 	}
@@ -37,10 +39,10 @@ func ReplaceResource(
 	location := services.GetRequestUrl(req)
 	resp.Header().Add("Location", location)
 	if !resourceExists {
-		logger.Info("Resource created", "resourceIdentifier", resourceIdentifier.Value)
+		logger.InfoContext(ctx, "Resource created", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(201)
 	} else {
-		logger.Info("Existing resource replaced", "resourceIdentifier", resourceIdentifier.Value)
+		logger.InfoContext(ctx, "Existing resource replaced", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(204)
 	}
 	return nil

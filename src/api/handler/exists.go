@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -11,13 +12,14 @@ import (
 )
 
 func ResourceExists(
+	ctx context.Context,
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
 	logger *slog.Logger,
 	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
-	exists, err := repository.ResourceExists(resourceIdentifier)
+	exists, err := repository.ResourceExistsWithContext(ctx, resourceIdentifier)
 	if err != nil {
 		resp.WriteHeader(500)
 		return err
@@ -25,15 +27,15 @@ func ResourceExists(
 
 	if exists {
 
-		resource, _ := repository.GetResource(resourceIdentifier)
+		resource, _ := repository.GetResourceWithContext(ctx, resourceIdentifier)
 		defer (*resource.Body).Close()
 		for k, v := range *resource.Headers {
 			resp.Header().Add(k, strings.Join(v, ",'"))
 		}
-		logger.Debug("Resource found", "resourceIdentifier", resourceIdentifier.Value)
+		logger.DebugContext(ctx, "Resource found", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(204)
 	} else {
-		logger.Debug("Failed to find resource", "resourceIdentifier", resourceIdentifier.Value)
+		logger.DebugContext(ctx, "Failed to find resource", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(404)
 	}
 	return nil

@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"log/slog"
 	"testing"
 
@@ -27,8 +28,9 @@ func TestShouldFilterOutInvalidResponseHeaders(t *testing.T) {
 	for k, v := range expected {
 		destination[k] = v
 	}
+	ctx := context.Background()
 
-	filtered := services.FilterForValidResponseHeaders(&destination, logger)
+	filtered := services.FilterForValidResponseHeadersWithContext(ctx, &destination, logger)
 
 	assert.Equal(t, expected, *filtered)
 }
@@ -44,8 +46,9 @@ func TestShouldAllowHeadersThatsNotInvalid(t *testing.T) {
 		"X-MyHeader":     {"abcd"},
 		"Content-Length": {"123"},
 	}
+	ctx := context.Background()
 
-	filtered := services.FilterForValidResponseHeaders(&testHeaders, logger)
+	filtered := services.FilterForValidResponseHeadersWithContext(ctx, &testHeaders, logger)
 
 	assert.Equal(t, expected, *filtered)
 }
@@ -60,10 +63,11 @@ func TestShouldPassIfAllProvidedHeadersAreInvalid(t *testing.T) {
 		"user-agent":      {"agent"},
 		"Authorization":   {"Bearer token"},
 	}
+	ctx := context.Background()
 
 	expected := map[string][]string{}
 
-	filtered := services.FilterForValidResponseHeaders(&testHeaders, logger)
+	filtered := services.FilterForValidResponseHeadersWithContext(ctx, &testHeaders, logger)
 
 	assert.Equal(t, expected, *filtered)
 }

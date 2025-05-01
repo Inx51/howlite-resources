@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"io"
 
 	"github.com/inx51/howlite/resources/resource"
@@ -8,8 +9,8 @@ import (
 
 type Storage interface {
 	GetName() string
-	RemoveResource(resourceIdentifier *resource.ResourceIdentifier) error
-	NewResourceWriter(resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error)
-	ResourceExists(resourceIdentifier *resource.ResourceIdentifier) (bool, error)
-	GetResource(resourceIdentifier *resource.ResourceIdentifier) (io.ReadCloser, error)
+	RemoveResourceWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error
+	NewResourceWriterWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error)
+	ResourceExistsWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error)
+	GetResourceWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.ReadCloser, error)
 }

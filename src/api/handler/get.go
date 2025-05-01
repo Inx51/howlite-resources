@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 )
 
 func GetResource(
+	ctx context.Context,
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
@@ -19,19 +21,19 @@ func GetResource(
 	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
-	resourceExists, err := repository.ResourceExists(resourceIdentifier)
+	resourceExists, err := repository.ResourceExistsWithContext(ctx, resourceIdentifier)
 	if err != nil {
 		resp.WriteHeader(500)
 		return err
 	}
 
 	if !resourceExists {
-		logger.Debug("Failed to get resource since it does not exist", "resourceIdentifier", resourceIdentifier.Value)
+		logger.DebugContext(ctx, "Failed to get resource since it does not exist", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(404)
 		return nil
 	}
 
-	resource, err := repository.GetResource(resourceIdentifier)
+	resource, err := repository.GetResourceWithContext(ctx, resourceIdentifier)
 	if err != nil {
 		resp.WriteHeader(500)
 		return err
@@ -47,6 +49,6 @@ func GetResource(
 	body := *resource.Body
 	io.CopyBuffer(resp, body, buff)
 	body.Close()
-	logger.Debug("Resource returned", "resourceIdentifier", resourceIdentifier.Value)
+	logger.DebugContext(ctx, "Resource returned", "resourceIdentifier", resourceIdentifier.Value)
 	return nil
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 )
 
 func RemoveResource(
+	ctx context.Context,
 	resp http.ResponseWriter,
 	req *http.Request,
 	repository *repository.Repository,
@@ -17,24 +19,24 @@ func RemoveResource(
 	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
-	resourceExists, err := repository.ResourceExists(resourceIdentifier)
+	resourceExists, err := repository.ResourceExistsWithContext(ctx, resourceIdentifier)
 	if err != nil {
 		resp.WriteHeader(500)
 		return err
 	}
 
 	if !resourceExists {
-		logger.Debug("Failed to remove resource since it does not exist", "resourceIdentifier", resourceIdentifier.Value)
+		logger.DebugContext(ctx, "Failed to remove resource since it does not exist", "resourceIdentifier", resourceIdentifier.Value)
 		resp.WriteHeader(404)
 		return nil
 	}
 
-	err = repository.RemoveResource(resourceIdentifier)
+	err = repository.RemoveResourceWithContext(ctx, resourceIdentifier)
 	if err != nil {
 		return err
 	}
 
 	resp.WriteHeader(204)
-	logger.Info("Removed resource", "resourceIdentifier", resourceIdentifier.Value)
+	logger.InfoContext(ctx, "Removed resource", "resourceIdentifier", resourceIdentifier.Value)
 	return nil
 }

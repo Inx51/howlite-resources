@@ -1,6 +1,5 @@
 #TODO
-* Add Spans/activities
-* Validate spans and activies in Grafana
+* Add span for FileStorage (?)
 * Add metrics
 * Validate metrics in Grafana
 * Rewrite storage factory to "pick" a storage-provider based on an env-variables
