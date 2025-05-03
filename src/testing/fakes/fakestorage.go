@@ -41,7 +41,7 @@ func (storage *FakeStorage) AddTestResource(identifier string, headers map[strin
 
 	//TODO: Could this be simplified?
 	resIdentifier := resource.NewResourceIdentifier(&identifier)
-	memWriteCloser, err := storage.NewResourceWriterWithContext(context.Background(), resIdentifier)
+	memWriteCloser, err := storage.NewResourceWriterContext(context.Background(), resIdentifier)
 	if err != nil {
 		panic(err)
 	}
@@ -85,22 +85,22 @@ func (storage *FakeStorage) GetName() string {
 	return "FakeStorage"
 }
 
-func (storage *FakeStorage) RemoveResourceWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
+func (storage *FakeStorage) RemoveResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
 	delete(storage.storage, *resourceIdentifier.Value)
 	return nil
 }
 
-func (storage *FakeStorage) NewResourceWriterWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error) {
+func (storage *FakeStorage) NewResourceWriterContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error) {
 	buffer := &memoryWriteCloser{buffer: new(bytes.Buffer)}
 	storage.storage[*resourceIdentifier.Value] = buffer
 	return buffer, nil
 }
 
-func (storage *FakeStorage) ResourceExistsWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
+func (storage *FakeStorage) ResourceExistsContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
 	_, ok := storage.storage[*resourceIdentifier.Value]
 	return ok, nil
 }
 
-func (storage *FakeStorage) GetResourceWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.ReadCloser, error) {
+func (storage *FakeStorage) GetResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.ReadCloser, error) {
 	return storage.storage[*resourceIdentifier.Value], nil
 }

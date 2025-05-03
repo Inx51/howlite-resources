@@ -19,7 +19,7 @@ func RemoveResource(
 	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
-	resourceExists, err := repository.ResourceExistsWithContext(ctx, resourceIdentifier)
+	resourceExists, err := repository.ResourceExistsContext(ctx, resourceIdentifier)
 	if err != nil {
 		resp.WriteHeader(500)
 		return err
@@ -31,7 +31,7 @@ func RemoveResource(
 		return nil
 	}
 
-	err = repository.RemoveResourceWithContext(ctx, resourceIdentifier)
+	err = repository.RemoveResourceContext(ctx, resourceIdentifier)
 	if err != nil {
 		return err
 	}

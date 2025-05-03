@@ -30,7 +30,7 @@ func TestShouldFilterOutInvalidResponseHeaders(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	filtered := services.FilterForValidResponseHeadersWithContext(ctx, &destination, logger)
+	filtered := services.FilterForValidResponseHeadersContext(ctx, &destination, logger)
 
 	assert.Equal(t, expected, *filtered)
 }
@@ -48,7 +48,7 @@ func TestShouldAllowHeadersThatsNotInvalid(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	filtered := services.FilterForValidResponseHeadersWithContext(ctx, &testHeaders, logger)
+	filtered := services.FilterForValidResponseHeadersContext(ctx, &testHeaders, logger)
 
 	assert.Equal(t, expected, *filtered)
 }
@@ -67,7 +67,7 @@ func TestShouldPassIfAllProvidedHeadersAreInvalid(t *testing.T) {
 
 	expected := map[string][]string{}
 
-	filtered := services.FilterForValidResponseHeadersWithContext(ctx, &testHeaders, logger)
+	filtered := services.FilterForValidResponseHeadersContext(ctx, &testHeaders, logger)
 
 	assert.Equal(t, expected, *filtered)
 }

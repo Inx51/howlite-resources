@@ -21,9 +21,9 @@ func NewRepository(storage *storage.Storage, logger *slog.Logger) *Repository {
 	}
 }
 
-func (repository *Repository) GetResourceWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (*resource.Resource, error) {
+func (repository *Repository) GetResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (*resource.Resource, error) {
 	repository.logger.DebugContext(ctx, "Trying to get resource", "resourceIdentifier", resourceIdentifier.Value)
-	resourceStream, err := repository.Storage.GetResourceWithContext(ctx, resourceIdentifier)
+	resourceStream, err := repository.Storage.GetResourceContext(ctx, resourceIdentifier)
 	if err != nil {
 		repository.logger.ErrorContext(ctx, "Failed to get resource", "resourceIdentifier", resourceIdentifier.Value, "error", err)
 		return nil, err
@@ -39,9 +39,9 @@ func (repository *Repository) GetResourceWithContext(ctx context.Context, resour
 	return resource, nil
 }
 
-func (repository *Repository) ResourceExistsWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
+func (repository *Repository) ResourceExistsContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
 	repository.logger.DebugContext(ctx, "Trying to validate if resource exists", "resourceIdentifier", resourceIdentifier.Value)
-	exists, err := repository.Storage.ResourceExistsWithContext(ctx, resourceIdentifier)
+	exists, err := repository.Storage.ResourceExistsContext(ctx, resourceIdentifier)
 	if err != nil {
 		repository.logger.ErrorContext(ctx, "Failed to get resource", "resourceIdentifier", resourceIdentifier.Value, "error", err)
 		return false, err
@@ -50,15 +50,15 @@ func (repository *Repository) ResourceExistsWithContext(ctx context.Context, res
 	return exists, nil
 }
 
-func (repository *Repository) SaveResourceWithContext(ctx context.Context, resource *resource.Resource) error {
+func (repository *Repository) SaveResourceContext(ctx context.Context, resource *resource.Resource) error {
 	repository.logger.DebugContext(ctx, "Trying to save resource", "resourceIdentifier", resource.Identifier.Value)
-	resourceStream, err := repository.Storage.NewResourceWriterWithContext(ctx, resource.Identifier)
+	resourceStream, err := repository.Storage.NewResourceWriterContext(ctx, resource.Identifier)
 	if err != nil {
 		repository.logger.ErrorContext(ctx, "Failed to save resource", "resourceIdentifier", resource.Identifier.Value, "error", err)
 		return err
 	}
 	//Write headers
-	headers := services.FilterForValidResponseHeadersWithContext(ctx, resource.Headers, repository.logger)
+	headers := services.FilterForValidResponseHeadersContext(ctx, resource.Headers, repository.logger)
 	err = services.WriteHeaders(&resourceStream, headers)
 	if err != nil {
 		repository.logger.ErrorContext(ctx, "Failed to write headers", "resourceIdentifier", resource.Identifier.Value, "error", err)
@@ -77,9 +77,9 @@ func (repository *Repository) SaveResourceWithContext(ctx context.Context, resou
 	return nil
 }
 
-func (repository *Repository) RemoveResourceWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
+func (repository *Repository) RemoveResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
 	repository.logger.DebugContext(ctx, "Trying to remove resource", "resourceIdentifier", resourceIdentifier.Value)
-	err := repository.Storage.RemoveResourceWithContext(ctx, resourceIdentifier)
+	err := repository.Storage.RemoveResourceContext(ctx, resourceIdentifier)
 	if err != nil {
 		repository.logger.ErrorContext(ctx, "Failed to remove resource", "resourceIdentifier", resourceIdentifier.Value, "error", err)
 		return err

@@ -21,7 +21,7 @@ func GetResource(
 	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
-	resourceExists, err := repository.ResourceExistsWithContext(ctx, resourceIdentifier)
+	resourceExists, err := repository.ResourceExistsContext(ctx, resourceIdentifier)
 	if err != nil {
 		resp.WriteHeader(500)
 		return err
@@ -33,7 +33,7 @@ func GetResource(
 		return nil
 	}
 
-	resource, err := repository.GetResourceWithContext(ctx, resourceIdentifier)
+	resource, err := repository.GetResourceContext(ctx, resourceIdentifier)
 	if err != nil {
 		resp.WriteHeader(500)
 		return err

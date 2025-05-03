@@ -9,8 +9,8 @@ import (
 
 type Storage interface {
 	GetName() string
-	RemoveResourceWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error
-	NewResourceWriterWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error)
-	ResourceExistsWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error)
-	GetResourceWithContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.ReadCloser, error)
+	RemoveResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error
+	NewResourceWriterContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error)
+	ResourceExistsContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error)
+	GetResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.ReadCloser, error)
 }

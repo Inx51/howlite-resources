@@ -19,7 +19,7 @@ func ResourceExists(
 	logger *slog.Logger,
 	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
-	exists, err := repository.ResourceExistsWithContext(ctx, resourceIdentifier)
+	exists, err := repository.ResourceExistsContext(ctx, resourceIdentifier)
 	if err != nil {
 		resp.WriteHeader(500)
 		return err
@@ -27,7 +27,7 @@ func ResourceExists(
 
 	if exists {
 
-		resource, _ := repository.GetResourceWithContext(ctx, resourceIdentifier)
+		resource, _ := repository.GetResourceContext(ctx, resourceIdentifier)
 		defer (*resource.Body).Close()
 		for k, v := range *resource.Headers {
 			resp.Header().Add(k, strings.Join(v, ",'"))

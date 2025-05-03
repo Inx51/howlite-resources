@@ -13,9 +13,9 @@ import (
 )
 
 type Endpoint struct {
-	Method             string
-	Description        string
-	HandlerWithContext Handler
+	Method         string
+	Description    string
+	HandlerContext Handler
 }
 
 type Handler func(context.Context, http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger, *metric.MeterProvider) error
@@ -27,29 +27,29 @@ func SetupHandlers(
 
 	endpoints := []Endpoint{
 		{
-			Method:             "GET",
-			Description:        "GetResource",
-			HandlerWithContext: handler.GetResource,
+			Method:         "GET",
+			Description:    "GetResource",
+			HandlerContext: handler.GetResource,
 		},
 		{
-			Method:             "POST",
-			Description:        "CreateResource",
-			HandlerWithContext: handler.CreateResource,
+			Method:         "POST",
+			Description:    "CreateResource",
+			HandlerContext: handler.CreateResource,
 		},
 		{
-			Method:             "HEAD",
-			Description:        "ResourceExists",
-			HandlerWithContext: handler.ResourceExists,
+			Method:         "HEAD",
+			Description:    "ResourceExists",
+			HandlerContext: handler.ResourceExists,
 		},
 		{
-			Method:             "PUT",
-			Description:        "ReplaceResource",
-			HandlerWithContext: handler.ReplaceResource,
+			Method:         "PUT",
+			Description:    "ReplaceResource",
+			HandlerContext: handler.ReplaceResource,
 		},
 		{
-			Method:             "DELETE",
-			Description:        "RemoveResource",
-			HandlerWithContext: handler.RemoveResource,
+			Method:         "DELETE",
+			Description:    "RemoveResource",
+			HandlerContext: handler.RemoveResource,
 		},
 	}
 
@@ -64,7 +64,7 @@ func SetupHandlers(
 
 					logger.InfoContext(ctx, "Request received", "method", req.Method, "url", req.URL.Path)
 					logger.DebugContext(ctx, "Found matching endpoint route", "method", endpoint.Method, "path", req.URL.Path)
-					err := endpoint.HandlerWithContext(
+					err := endpoint.HandlerContext(
 						ctx,
 						resp,
 						req,
@@ -83,7 +83,7 @@ func SetupHandlers(
 	}
 }
 
-func RunWithContext(
+func RunContext(
 	ctx context.Context,
 	host string,
 	port int,

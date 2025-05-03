@@ -24,11 +24,11 @@ func main() {
 	ctx, span := application.SetupOpenTelemetry()
 	defer span.End()
 
-	application.SetupStorageWithContext(ctx)
+	application.SetupStorageContext(ctx)
 	application.SetupRepository()
 	application.SetupHandlers()
 
-	application.RunWithContext(ctx)
+	application.RunContext(ctx)
 }
 
 type Application struct {
@@ -61,7 +61,7 @@ func (app *Application) SetupOpenTelemetry() (context.Context, oteltrace.Span) {
 	return app.tracer.Tracer("main").Start(context.Background(), "main")
 }
 
-func (app *Application) SetupStorageWithContext(ctx context.Context) {
+func (app *Application) SetupStorageContext(ctx context.Context) {
 	app.logger.DebugContext(ctx, "Trying to setup storage")
 	app.storage = filesystem.NewStorage(app.config.PATH, app.logger)
 	app.logger.InfoContext(ctx, "Setup storage provider", "provider", app.storage.GetName())
@@ -78,6 +78,6 @@ func (app *Application) SetupHandlers() {
 		app.meter)
 }
 
-func (app *Application) RunWithContext(ctx context.Context) {
-	api.RunWithContext(ctx, app.config.HOST, app.config.PORT, app.logger)
+func (app *Application) RunContext(ctx context.Context) {
+	api.RunContext(ctx, app.config.HOST, app.config.PORT, app.logger)
 }

@@ -20,7 +20,7 @@ func ReplaceResource(
 	meter *metric.MeterProvider) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
-	resourceExists, err := repository.ResourceExistsWithContext(ctx, resourceIdentifier)
+	resourceExists, err := repository.ResourceExistsContext(ctx, resourceIdentifier)
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func ReplaceResource(
 	}
 
 	resource := resource.NewResource(resourceIdentifier, &headers, &req.Body)
-	err = repository.SaveResourceWithContext(ctx, resource)
+	err = repository.SaveResourceContext(ctx, resource)
 	if err != nil {
 		return err
 	}
