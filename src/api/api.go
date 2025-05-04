@@ -64,6 +64,7 @@ func SetupHandlers(
 
 					logger.InfoContext(ctx, "Request received", "method", req.Method, "url", req.URL.Path)
 					logger.DebugContext(ctx, "Found matching endpoint route", "method", endpoint.Method, "path", req.URL.Path)
+
 					err := endpoint.HandlerContext(
 						ctx,
 						resp,

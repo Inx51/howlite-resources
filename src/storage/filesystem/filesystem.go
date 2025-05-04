@@ -11,7 +11,7 @@ import (
 
 	"github.com/inx51/howlite/resources/resource"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace" // Correct OpenTelemetry trace package
+	"go.opentelemetry.io/otel/trace"
 )
 
 type FileSystem struct {
@@ -33,9 +33,7 @@ func (fileSystem *FileSystem) GetName() string {
 	return "FileSystemStorage"
 }
 
-func (fileSystem *FileSystem) RemoveResourceContext(reqCtx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
-	ctx, span := fileSystem.tracer.Start(reqCtx, "RemoveResource")
-	defer span.End()
+func (fileSystem *FileSystem) RemoveResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
 	path := fileSystem.resourcePath(*resourceIdentifier)
 	fileSystem.logger.DebugContext(ctx, "Trying to remove resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
 	err := os.Remove(path)
@@ -47,9 +45,7 @@ func (fileSystem *FileSystem) RemoveResourceContext(reqCtx context.Context, reso
 	return nil
 }
 
-func (fileSystem *FileSystem) NewResourceWriterContext(reqCtx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error) {
-	ctx, span := fileSystem.tracer.Start(reqCtx, "NewResource")
-	defer span.End()
+func (fileSystem *FileSystem) NewResourceWriterContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error) {
 	path := fileSystem.resourcePath(*resourceIdentifier)
 	fileSystem.logger.DebugContext(ctx, "Trying to create new writer for resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
 	writer, err := os.Create(path)
@@ -61,9 +57,7 @@ func (fileSystem *FileSystem) NewResourceWriterContext(reqCtx context.Context, r
 	return writer, nil
 }
 
-func (fileSystem *FileSystem) ResourceExistsContext(reqCtx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
-	ctx, span := fileSystem.tracer.Start(reqCtx, "ResourceExists")
-	defer span.End()
+func (fileSystem *FileSystem) ResourceExistsContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
 	path := fileSystem.resourcePath(*resourceIdentifier)
 	fileSystem.logger.DebugContext(ctx, "Trying to validate if resource file exists", "resourceIdentifier", resourceIdentifier.Value, "file", path)
 	_, err := os.Stat(path)

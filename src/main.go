@@ -19,9 +19,11 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	application := NewApplication()
 	application.SetupConfiguration()
-	ctx, span := application.SetupOpenTelemetry()
+	ctx, span := application.SetupOpenTelemetry(ctx)
 	defer span.End()
 
 	application.SetupStorageContext(ctx)
@@ -53,12 +55,12 @@ func (app *Application) SetupConfiguration() {
 	app.config = &config
 }
 
-func (app *Application) SetupOpenTelemetry() (context.Context, oteltrace.Span) {
+func (app *Application) SetupOpenTelemetry(ctx context.Context) (context.Context, oteltrace.Span) {
 	app.logger = telemetry.CreateOpenTelemetryLogger(app.config.OTEL)
 	app.tracer = telemetry.CreateOpenTelemetryTracer(app.config.OTEL)
 	app.meter = telemetry.CreateOpenTelemetryMeter(app.config.OTEL)
 
-	return app.tracer.Tracer("main").Start(context.Background(), "main")
+	return app.tracer.Tracer("main").Start(ctx, "main")
 }
 
 func (app *Application) SetupStorageContext(ctx context.Context) {

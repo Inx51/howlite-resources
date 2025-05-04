@@ -57,6 +57,7 @@ func (repository *Repository) SaveResourceContext(ctx context.Context, resource 
 		repository.logger.ErrorContext(ctx, "Failed to save resource", "resourceIdentifier", resource.Identifier.Value, "error", err)
 		return err
 	}
+
 	//Write headers
 	headers := services.FilterForValidResponseHeadersContext(ctx, resource.Headers, repository.logger)
 	err = services.WriteHeaders(&resourceStream, headers)
