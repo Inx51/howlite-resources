@@ -4,11 +4,18 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"sync"
 
 	"github.com/inx51/howlite/resources/api/handler/services"
 	"github.com/inx51/howlite/resources/resource"
 	"github.com/inx51/howlite/resources/resource/repository"
-	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+)
+
+var (
+	resourcesCreatedCounter     metric.Int64Counter
+	resourcesCreatedCounterOnce sync.Once
 )
 
 func CreateResource(
@@ -17,7 +24,7 @@ func CreateResource(
 	req *http.Request,
 	repository *repository.Repository,
 	logger *slog.Logger,
-	meter *metric.MeterProvider) error {
+	meter *metric.Meter) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
 	resourceExists, err := repository.ResourceExistsContext(ctx, resourceIdentifier)
@@ -44,9 +51,18 @@ func CreateResource(
 		return err
 	}
 
+	incrementResourceCreatedCounterContext(ctx, meter, resourceIdentifier)
+
 	location := services.GetRequestUrl(req)
 	resp.Header().Add("Location", location)
 	resp.WriteHeader(201)
 	logger.InfoContext(ctx, "Resource created", "resourceIdentifier", resourceIdentifier.Value)
 	return nil
+}
+
+func incrementResourceCreatedCounterContext(ctx context.Context, meter *metric.Meter, resourceIdentifier *resource.ResourceIdentifier) {
+	resourcesCreatedCounterOnce.Do(func() {
+		resourcesCreatedCounter, _ = (*meter).Int64Counter("resources.created_total")
+	})
+	resourcesCreatedCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("resource_identifier", *resourceIdentifier.Value)))
 }

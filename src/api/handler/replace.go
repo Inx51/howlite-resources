@@ -4,11 +4,18 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"sync"
 
 	"github.com/inx51/howlite/resources/api/handler/services"
 	"github.com/inx51/howlite/resources/resource"
 	"github.com/inx51/howlite/resources/resource/repository"
-	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+)
+
+var (
+	resourcesReplacedCounter     metric.Int64Counter
+	resourcesReplacedCounterOnce sync.Once
 )
 
 func ReplaceResource(
@@ -17,7 +24,7 @@ func ReplaceResource(
 	req *http.Request,
 	repository *repository.Repository,
 	logger *slog.Logger,
-	meter *metric.MeterProvider) error {
+	meter *metric.Meter) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
 	resourceExists, err := repository.ResourceExistsContext(ctx, resourceIdentifier)
@@ -36,6 +43,8 @@ func ReplaceResource(
 		return err
 	}
 
+	incrementResourcesReplacedCounterContext(ctx, meter, resourceIdentifier)
+
 	location := services.GetRequestUrl(req)
 	resp.Header().Add("Location", location)
 	if !resourceExists {
@@ -46,4 +55,11 @@ func ReplaceResource(
 		resp.WriteHeader(204)
 	}
 	return nil
+}
+
+func incrementResourcesReplacedCounterContext(ctx context.Context, meter *metric.Meter, resourceIdentifier *resource.ResourceIdentifier) {
+	resourcesReplacedCounterOnce.Do(func() {
+		resourcesReplacedCounter, _ = (*meter).Int64Counter("resources.replaced_total")
+	})
+	resourcesReplacedCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("resource_identifier", *resourceIdentifier.Value)))
 }

@@ -5,12 +5,14 @@ import (
 
 	"github.com/inx51/howlite/resources/config"
 	"go.opentelemetry.io/contrib/exporters/autoexport"
+	"go.opentelemetry.io/otel"
+	otelmetric "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
-func CreateOpenTelemetryMeter(conf config.OtelConfiguration) *metric.MeterProvider {
+func CreateOpenTelemetryMeter(conf config.OtelConfiguration) *otelmetric.Meter {
 	ctx := context.Background()
 
 	otlpMetricReader, err := autoexport.NewMetricReader(ctx)
@@ -25,5 +27,9 @@ func CreateOpenTelemetryMeter(conf config.OtelConfiguration) *metric.MeterProvid
 			semconv.ServiceNameKey.String(conf.OTEL_SERVICE_NAME),
 		)))
 
-	return meterProvider
+	otel.SetMeterProvider(meterProvider)
+
+	meter := meterProvider.Meter("howlite.resources")
+
+	return &meter
 }

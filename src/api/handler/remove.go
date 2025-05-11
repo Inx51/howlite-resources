@@ -4,10 +4,17 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"sync"
 
 	"github.com/inx51/howlite/resources/resource"
 	"github.com/inx51/howlite/resources/resource/repository"
-	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+)
+
+var (
+	resourcesRemovedCounter     metric.Int64Counter
+	resourcesRemovedCounterOnce sync.Once
 )
 
 func RemoveResource(
@@ -16,7 +23,7 @@ func RemoveResource(
 	req *http.Request,
 	repository *repository.Repository,
 	logger *slog.Logger,
-	meter *metric.MeterProvider) error {
+	meter *metric.Meter) error {
 	resourceIdentifier := resource.NewResourceIdentifier(&req.URL.Path)
 
 	resourceExists, err := repository.ResourceExistsContext(ctx, resourceIdentifier)
@@ -36,7 +43,16 @@ func RemoveResource(
 		return err
 	}
 
+	incrementResourcesRemovedCounterContext(ctx, meter, resourceIdentifier)
+
 	resp.WriteHeader(204)
 	logger.InfoContext(ctx, "Removed resource", "resourceIdentifier", resourceIdentifier.Value)
 	return nil
+}
+
+func incrementResourcesRemovedCounterContext(ctx context.Context, meter *metric.Meter, resourceIdentifier *resource.ResourceIdentifier) {
+	resourcesRemovedCounterOnce.Do(func() {
+		resourcesRemovedCounter, _ = (*meter).Int64Counter("resources.removed_total")
+	})
+	resourcesRemovedCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("resource_identifier", *resourceIdentifier.Value)))
 }

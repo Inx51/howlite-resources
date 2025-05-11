@@ -4,11 +4,6 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/joho/godotenv"
-	"go.opentelemetry.io/otel/sdk/metric"
-	"go.opentelemetry.io/otel/sdk/trace"
-	oteltrace "go.opentelemetry.io/otel/trace"
-
 	"github.com/caarlos0/env/v11"
 	"github.com/inx51/howlite/resources/api"
 	"github.com/inx51/howlite/resources/config"
@@ -16,6 +11,9 @@ import (
 	"github.com/inx51/howlite/resources/storage"
 	"github.com/inx51/howlite/resources/storage/filesystem"
 	"github.com/inx51/howlite/resources/telemetry"
+	"github.com/joho/godotenv"
+	otelmetric "go.opentelemetry.io/otel/metric"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 func main() {
@@ -23,8 +21,8 @@ func main() {
 
 	application := NewApplication()
 	application.SetupConfiguration()
-	ctx, span := application.SetupOpenTelemetry(ctx)
-	defer span.End()
+	application.SetupOpenTelemetry()
+	defer (*application.span).End()
 
 	application.SetupStorageContext(ctx)
 	application.SetupRepository()
@@ -38,8 +36,8 @@ type Application struct {
 	storage    storage.Storage
 	config     *config.Configuration
 	logger     *slog.Logger
-	tracer     *trace.TracerProvider
-	meter      *metric.MeterProvider
+	meter      *otelmetric.Meter
+	span       *oteltrace.Span
 }
 
 func NewApplication() *Application {
@@ -55,12 +53,10 @@ func (app *Application) SetupConfiguration() {
 	app.config = &config
 }
 
-func (app *Application) SetupOpenTelemetry(ctx context.Context) (context.Context, oteltrace.Span) {
+func (app *Application) SetupOpenTelemetry() {
 	app.logger = telemetry.CreateOpenTelemetryLogger(app.config.OTEL)
-	app.tracer = telemetry.CreateOpenTelemetryTracer(app.config.OTEL)
+	app.span = telemetry.CreateOpenTelemetryTracer(app.config.OTEL)
 	app.meter = telemetry.CreateOpenTelemetryMeter(app.config.OTEL)
-
-	return app.tracer.Tracer("main").Start(ctx, "main")
 }
 
 func (app *Application) SetupStorageContext(ctx context.Context) {

@@ -10,9 +10,10 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
-func CreateOpenTelemetryTracer(conf config.OtelConfiguration) *trace.TracerProvider {
+func CreateOpenTelemetryTracer(conf config.OtelConfiguration) *oteltrace.Span {
 	ctx := context.Background()
 	otlpExporter, err := autoexport.NewSpanExporter(ctx)
 	if err != nil {
@@ -35,5 +36,7 @@ func CreateOpenTelemetryTracer(conf config.OtelConfiguration) *trace.TracerProvi
 
 	otel.SetTracerProvider(tracerProvider)
 
-	return tracerProvider
+	_, span := tracerProvider.Tracer("howlite.resources").Start(ctx, "Initialize")
+
+	return &span
 }

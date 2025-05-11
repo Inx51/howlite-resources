@@ -9,7 +9,7 @@ import (
 	"github.com/inx51/howlite/resources/api/handler"
 	"github.com/inx51/howlite/resources/resource/repository"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.opentelemetry.io/otel/sdk/metric"
+	otelmetric "go.opentelemetry.io/otel/metric"
 )
 
 type Endpoint struct {
@@ -18,12 +18,12 @@ type Endpoint struct {
 	HandlerContext Handler
 }
 
-type Handler func(context.Context, http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger, *metric.MeterProvider) error
+type Handler func(context.Context, http.ResponseWriter, *http.Request, *repository.Repository, *slog.Logger, *otelmetric.Meter) error
 
 func SetupHandlers(
 	repository *repository.Repository,
 	logger *slog.Logger,
-	meter *metric.MeterProvider) {
+	meter *otelmetric.Meter) {
 
 	endpoints := []Endpoint{
 		{
