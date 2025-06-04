@@ -5,13 +5,7 @@ Content-Type: application/json
 
 ###
 
-GET http://localhost:8080/123asd
-
-###
-POST http://localhost:8080/abcda
-Content-Type: application/json
-
-< C:\Users\Mattias\Downloads\Paris_patchwork.jpg
+GET http://localhost:8080/123a
 
 ###
 
