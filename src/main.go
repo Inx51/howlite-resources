@@ -9,7 +9,6 @@ import (
 	"github.com/inx51/howlite/resources/config"
 	"github.com/inx51/howlite/resources/resource/repository"
 	"github.com/inx51/howlite/resources/storage"
-	"github.com/inx51/howlite/resources/storage/filesystem"
 	"github.com/inx51/howlite/resources/telemetry"
 	"github.com/joho/godotenv"
 	otelmetric "go.opentelemetry.io/otel/metric"
@@ -33,7 +32,7 @@ func main() {
 
 type Application struct {
 	repository *repository.Repository
-	storage    storage.Storage
+	storage    *storage.Storage
 	config     *config.Configuration
 	logger     *slog.Logger
 	meter      *otelmetric.Meter
@@ -61,12 +60,17 @@ func (app *Application) SetupOpenTelemetry() {
 
 func (app *Application) SetupStorageContext(ctx context.Context) {
 	app.logger.DebugContext(ctx, "Trying to setup storage")
-	app.storage = filesystem.NewStorage(app.config.PATH, app.logger)
-	app.logger.InfoContext(ctx, "Setup storage provider", "provider", app.storage.GetName())
+	storage, err := storage.Create(app.logger, app.config.STORAGE_PROVIDER)
+	if err != nil {
+		app.logger.ErrorContext(ctx, "Failed to setup storage", "error", err)
+	}
+	app.storage = &storage
+	// filesystem.NewStorage(app.config.PATH, app.logger)
+	app.logger.InfoContext(ctx, "Setup storage provider", "provider", (*app.storage).GetName())
 }
 
 func (app *Application) SetupRepository() {
-	app.repository = repository.NewRepository(&app.storage, app.logger)
+	app.repository = repository.NewRepository(app.storage, app.logger)
 }
 
 func (app *Application) SetupHandlers() {

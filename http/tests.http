@@ -1,4 +1,18 @@
-POST http://localhost:8080/123
+POST http://localhost:8080/abcda
 Content-Type: application/json
 
 {"name":"John Doe","age":30,"city":"New York"}
+
+###
+
+GET http://localhost:8080/123asd
+
+###
+POST http://localhost:8080/abcda
+Content-Type: application/json
+
+< C:\Users\Mattias\Downloads\Paris_patchwork.jpg
+
+###
+
+DELETE http://localhost:8080/abcda

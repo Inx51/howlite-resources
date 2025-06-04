@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/inx51/howlite/resources/config"
 	"github.com/inx51/howlite/resources/resource"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -20,10 +21,10 @@ type FileSystem struct {
 	tracer      trace.Tracer
 }
 
-func NewStorage(storagePath string, logger *slog.Logger) *FileSystem {
+func NewStorage(config config.FilesystemConfiguration, logger *slog.Logger) *FileSystem {
 	tracer := otel.Tracer("FileSystemStorage")
 	return &FileSystem{
-		StoragePath: storagePath,
+		StoragePath: config.PATH,
 		logger:      logger,
 		tracer:      tracer,
 	}
