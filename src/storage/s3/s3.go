@@ -22,11 +22,12 @@ import (
 )
 
 type S3 struct {
-	logger *slog.Logger
-	Bucket string
-	Prefix string
-	tracer trace.Tracer
-	client *awss3.Client
+	logger         *slog.Logger
+	Bucket         string
+	Prefix         string
+	tracer         trace.Tracer
+	client         *awss3.Client
+	partUploadSize int
 }
 
 func NewStorage(config config.S3Configuration, logger *slog.Logger) *S3 {
@@ -48,11 +49,12 @@ func NewStorage(config config.S3Configuration, logger *slog.Logger) *S3 {
 	s3client := awss3.NewFromConfig(s3config)
 
 	return &S3{
-		Bucket: config.BUCKET,
-		Prefix: config.PREFIX,
-		client: s3client,
-		logger: logger,
-		tracer: tracer,
+		Bucket:         config.BUCKET,
+		Prefix:         config.PREFIX,
+		client:         s3client,
+		logger:         logger,
+		tracer:         tracer,
+		partUploadSize: config.PART_UPLOAD_SIZE,
 	}
 }
 
@@ -102,7 +104,7 @@ func (s3 *S3) NewResourceWriterContext(ctx context.Context, resourceIdentifier *
 		uploadId: output.UploadId,
 		logger:   s3.logger,
 		buffer:   &bytes.Buffer{},
-		partSize: 5 * 1024 * 1024, // 5 MB part size
+		partSize: s3.partUploadSize,
 	}, nil
 }
 
