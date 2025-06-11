@@ -30,7 +30,7 @@ type S3 struct {
 	partUploadSize int
 }
 
-func NewStorage(config config.S3Configuration, logger *slog.Logger) *S3 {
+func NewStorage(config config.S3Configuration, logger *slog.Logger) (*S3, error) {
 	tracer := otel.Tracer("S3")
 
 	creds := aws.NewCredentialsCache(awscred.NewStaticCredentialsProvider(
@@ -48,6 +48,10 @@ func NewStorage(config config.S3Configuration, logger *slog.Logger) *S3 {
 
 	s3client := awss3.NewFromConfig(s3config)
 
+	if config.PART_UPLOAD_SIZE <= 0 {
+		return nil, errors.New("PART_UPLOAD_SIZE must be greater than 0")
+	}
+
 	return &S3{
 		Bucket:         config.BUCKET,
 		Prefix:         config.PREFIX,
@@ -55,7 +59,7 @@ func NewStorage(config config.S3Configuration, logger *slog.Logger) *S3 {
 		logger:         logger,
 		tracer:         tracer,
 		partUploadSize: config.PART_UPLOAD_SIZE,
-	}
+	}, nil
 }
 
 func (fileSystem *S3) GetName() string {
