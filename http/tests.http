@@ -1,12 +1,12 @@
-POST http://localhost:8080/abcda
+POST http://localhost:8080/abcdaasd
 Content-Type: application/json
 
 {"name":"John Doe","age":30,"city":"New York"}
 
 ###
 
-GET http://localhost:8080/123a
+GET http://localhost:8080/abcdaasd
 
 ###
 
-DELETE http://localhost:8080/abcda
+DELETE http://localhost:8080/abcdaasd

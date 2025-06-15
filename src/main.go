@@ -45,7 +45,7 @@ func NewApplication() *Application {
 
 func (app *Application) SetupConfiguration() {
 
-	godotenv.Overload(".env", ".env.local")
+	godotenv.Overload(".env", "local.env")
 
 	config := config.Configuration{}
 	env.Parse(&config)

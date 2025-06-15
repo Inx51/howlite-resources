@@ -23,10 +23,11 @@ import (
 
 type S3 struct {
 	logger         *slog.Logger
-	Bucket         string
-	Prefix         string
+	bucket         string
+	prefix         string
 	tracer         trace.Tracer
 	client         *awss3.Client
+	uploadStrategy string
 	partUploadSize int
 }
 
@@ -39,26 +40,25 @@ func NewStorage(config config.S3Configuration, logger *slog.Logger) (*S3, error)
 		"",
 	))
 
-	endpoint := config.ENDPOINT
 	s3config := aws.Config{
-		Region:       config.REGION,
-		Credentials:  creds,
-		BaseEndpoint: &endpoint,
+		Region:      config.REGION,
+		Credentials: creds,
+	}
+
+	if config.ENDPOINT != "" {
+		s3config.BaseEndpoint = &config.ENDPOINT
 	}
 
 	s3client := awss3.NewFromConfig(s3config)
 
-	if config.PART_UPLOAD_SIZE <= 0 {
-		return nil, errors.New("PART_UPLOAD_SIZE must be greater than 0")
-	}
-
 	return &S3{
-		Bucket:         config.BUCKET,
-		Prefix:         config.PREFIX,
+		bucket:         config.BUCKET,
+		prefix:         config.PREFIX,
 		client:         s3client,
 		logger:         logger,
 		tracer:         tracer,
-		partUploadSize: config.PART_UPLOAD_SIZE,
+		uploadStrategy: config.UPLOAD_STRATEGY,
+		partUploadSize: config.MULTIPART_PART_UPLOAD_SIZE,
 	}, nil
 }
 
@@ -73,7 +73,7 @@ func (s3 *S3) RemoveResourceContext(ctx context.Context, resourceIdentifier *res
 	s3.logger.DebugContext(ctx, "Trying to remove resource file", "resourceIdentifier", resourceIdentifier.Value, "key", key)
 
 	_, err := s3.client.DeleteObject(ctx, &awss3.DeleteObjectInput{
-		Bucket: &s3.Bucket,
+		Bucket: &s3.bucket,
 		Key:    key,
 	})
 
@@ -91,7 +91,7 @@ func (s3 *S3) NewResourceWriterContext(ctx context.Context, resourceIdentifier *
 	key := *s3.resourceKey(resourceIdentifier)
 
 	output, err := s3.client.CreateMultipartUpload(ctx, &awss3.CreateMultipartUploadInput{
-		Bucket: &s3.Bucket,
+		Bucket: &s3.bucket,
 		Key:    &key,
 	})
 
@@ -100,21 +100,36 @@ func (s3 *S3) NewResourceWriterContext(ctx context.Context, resourceIdentifier *
 		return nil, err
 	}
 
-	return &multipartWriter{
-		ctx:      &ctx,
-		bucket:   &s3.Bucket,
-		key:      &key,
-		client:   s3.client,
-		uploadId: output.UploadId,
-		logger:   s3.logger,
-		buffer:   &bytes.Buffer{},
-		partSize: s3.partUploadSize,
-	}, nil
+	switch strings.ToLower(s3.uploadStrategy) {
+	case "multipart":
+		return &multipartWriter{
+			ctx:      &ctx,
+			bucket:   &s3.bucket,
+			key:      &key,
+			client:   s3.client,
+			uploadId: output.UploadId,
+			logger:   s3.logger,
+			buffer:   &bytes.Buffer{},
+			partSize: s3.partUploadSize,
+		}, nil
+	case "singlepart":
+		return &singlePartWriter{
+			ctx:    &ctx,
+			bucket: &s3.bucket,
+			key:    &key,
+			client: s3.client,
+			logger: s3.logger,
+			buffer: &bytes.Buffer{},
+		}, nil
+	default:
+		s3.logger.ErrorContext(ctx, "Invalid upload strategy", "strategy", s3.uploadStrategy)
+		return nil, errors.New("invalid upload strategy: " + s3.uploadStrategy)
+	}
 }
 
 func (s3 *S3) ResourceExistsContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
 	_, err := s3.client.HeadObject(ctx, &awss3.HeadObjectInput{
-		Bucket: &s3.Bucket,
+		Bucket: &s3.bucket,
 		Key:    s3.resourceKey(resourceIdentifier),
 	})
 
@@ -134,7 +149,7 @@ func (s3 *S3) GetResourceContext(ctx context.Context, resourceIdentifier *resour
 	key := s3.resourceKey(resourceIdentifier)
 
 	output, err := s3.client.GetObject(ctx, &awss3.GetObjectInput{
-		Bucket: &s3.Bucket,
+		Bucket: &s3.bucket,
 		Key:    key,
 	})
 	if err != nil {
@@ -148,8 +163,8 @@ func (s3 *S3) GetResourceContext(ctx context.Context, resourceIdentifier *resour
 func (s3 *S3) resourceKey(resourceIdentifier *resource.ResourceIdentifier) *string {
 	// Use the same identifier logic as filesystem, but as S3 key
 	id := identifierToStringVersion(resourceIdentifier)
-	if s3.Prefix != "" {
-		id = strings.TrimRight(s3.Prefix, "/") + "/" + id
+	if s3.prefix != "" {
+		id = strings.TrimRight(s3.prefix, "/") + "/" + id
 	}
 	id = id + ".bin"
 	return &id

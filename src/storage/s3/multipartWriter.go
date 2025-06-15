@@ -3,11 +3,12 @@ package s3
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/inx51/howlite/resources/errors"
+	customerrors "github.com/inx51/howlite/resources/errors"
 )
 
 type multipartWriter struct {
@@ -23,6 +24,10 @@ type multipartWriter struct {
 }
 
 func (writer *multipartWriter) Write(p []byte) (int, error) {
+
+	if writer.partSize <= 0 {
+		return 0, errors.New("MULTIPART_PART_UPLOAD_SIZE must be greater than 0")
+	}
 
 	take := 0
 
@@ -69,7 +74,7 @@ func (writer *multipartWriter) uploadPart() error {
 		abortErr := writer.abortMultipartUpload()
 
 		if abortErr != nil {
-			return errors.NewAggregatedError([]error{err, abortErr})
+			return customerrors.NewAggregatedError([]error{err, abortErr})
 		}
 
 		return err
@@ -108,7 +113,7 @@ func (writer *multipartWriter) completeMultipartUpload() error {
 		abortErr := writer.abortMultipartUpload()
 
 		if abortErr != nil {
-			return errors.NewAggregatedError([]error{err, abortErr})
+			return customerrors.NewAggregatedError([]error{err, abortErr})
 		}
 
 		return err
