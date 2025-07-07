@@ -15,26 +15,26 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type FileSystem struct {
+type Storage struct {
 	logger      *slog.Logger
 	StoragePath string
 	tracer      trace.Tracer
 }
 
-func NewStorage(config config.FilesystemConfiguration, logger *slog.Logger) *FileSystem {
+func NewStorage(config config.FilesystemConfiguration, logger *slog.Logger) *Storage {
 	tracer := otel.Tracer("FileSystemStorage")
-	return &FileSystem{
+	return &Storage{
 		StoragePath: config.PATH,
 		logger:      logger,
 		tracer:      tracer,
 	}
 }
 
-func (fileSystem *FileSystem) GetName() string {
+func (fileSystem *Storage) GetName() string {
 	return "FileSystemStorage"
 }
 
-func (fileSystem *FileSystem) RemoveResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
+func (fileSystem *Storage) RemoveResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
 	path := fileSystem.resourcePath(*resourceIdentifier)
 	fileSystem.logger.DebugContext(ctx, "Trying to remove resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
 	err := os.Remove(path)
@@ -46,7 +46,7 @@ func (fileSystem *FileSystem) RemoveResourceContext(ctx context.Context, resourc
 	return nil
 }
 
-func (fileSystem *FileSystem) NewResourceWriterContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error) {
+func (fileSystem *Storage) NewResourceWriterContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error) {
 	path := fileSystem.resourcePath(*resourceIdentifier)
 	fileSystem.logger.DebugContext(ctx, "Trying to create new writer for resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
 	writer, err := os.Create(path)
@@ -58,7 +58,7 @@ func (fileSystem *FileSystem) NewResourceWriterContext(ctx context.Context, reso
 	return writer, nil
 }
 
-func (fileSystem *FileSystem) ResourceExistsContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
+func (fileSystem *Storage) ResourceExistsContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
 	path := fileSystem.resourcePath(*resourceIdentifier)
 	fileSystem.logger.DebugContext(ctx, "Trying to validate if resource file exists", "resourceIdentifier", resourceIdentifier.Value, "file", path)
 	_, err := os.Stat(path)
@@ -74,7 +74,7 @@ func (fileSystem *FileSystem) ResourceExistsContext(ctx context.Context, resourc
 	return true, nil
 }
 
-func (fileSystem *FileSystem) GetResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.ReadCloser, error) {
+func (fileSystem *Storage) GetResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.ReadCloser, error) {
 	path := fileSystem.resourcePath(*resourceIdentifier)
 	fileSystem.logger.DebugContext(ctx, "Trying to read resource from file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
 	reader, err := os.Open(path)
@@ -86,7 +86,7 @@ func (fileSystem *FileSystem) GetResourceContext(ctx context.Context, resourceId
 	return reader, nil
 }
 
-func (fileSystem *FileSystem) resourcePath(resourceIdentifier resource.ResourceIdentifier) string {
+func (fileSystem *Storage) resourcePath(resourceIdentifier resource.ResourceIdentifier) string {
 	return fileSystem.StoragePath + "\\" + identifierToStringVersion(resourceIdentifier) + ".bin"
 }
 

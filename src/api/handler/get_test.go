@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/inx51/howlite/resources/api/handler"
-	"github.com/inx51/howlite/resources/testing/fakes"
+	"github.com/inx51/howlite/resources/storage/fakestorage"
 	"github.com/inx51/howlite/resources/testing/utilities"
 	"github.com/inx51/howlite/resources/testing/utilities/tester"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetShouldReturnOKStatusIfResourceExists(t *testing.T) {
-	storage := fakes.NewStorage()
+	storage := fakestorage.NewStorage()
 	storage.AddTestResource("/test", nil, nil)
 
 	tester := tester.NewTester()
@@ -25,7 +25,7 @@ func TestGetShouldReturnOKStatusIfResourceExists(t *testing.T) {
 }
 
 func TestGetShouldReturnCustomHeadersIfOKStatus(t *testing.T) {
-	storage := fakes.NewStorage()
+	storage := fakestorage.NewStorage()
 
 	headers := make(map[string][]string)
 	headers["X-Custom-Header"] = []string{"custom-value"}
@@ -43,7 +43,7 @@ func TestGetShouldReturnCustomHeadersIfOKStatus(t *testing.T) {
 }
 
 func TestGetShouldReturnBodyIfOKStatus(t *testing.T) {
-	storage := fakes.NewStorage()
+	storage := fakestorage.NewStorage()
 
 	body := []byte{0x001, 0x002, 0x003}
 
@@ -60,7 +60,7 @@ func TestGetShouldReturnBodyIfOKStatus(t *testing.T) {
 }
 
 func TestGetShouldReturnNotFoundStatusIfResourceDoesNotExist(t *testing.T) {
-	storage := fakes.NewStorage()
+	storage := fakestorage.NewStorage()
 
 	tester := tester.NewTester()
 	tester.Request.Method = "HEAD"

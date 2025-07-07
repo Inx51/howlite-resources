@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/inx51/howlite/resources/api/handler"
-	"github.com/inx51/howlite/resources/testing/fakes"
+	"github.com/inx51/howlite/resources/storage/fakestorage"
 	"github.com/inx51/howlite/resources/testing/utilities"
 	"github.com/inx51/howlite/resources/testing/utilities/tester"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRemoveShouldReturnNoContentStatusIfResourceRemoved(t *testing.T) {
-	storage := fakes.NewStorage()
+	storage := fakestorage.NewStorage()
 	storage.AddTestResource("/test", nil, nil)
 
 	tester := tester.NewTester()
@@ -25,7 +25,7 @@ func TestRemoveShouldReturnNoContentStatusIfResourceRemoved(t *testing.T) {
 }
 
 func TestRemoveShouldReturnNotFoundStatusIfResourceDoesNotExist(t *testing.T) {
-	storage := fakes.NewStorage()
+	storage := fakestorage.NewStorage()
 
 	tester := tester.NewTester()
 	tester.Request.Method = "HEAD"

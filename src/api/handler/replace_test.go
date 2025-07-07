@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/inx51/howlite/resources/api/handler"
-	"github.com/inx51/howlite/resources/testing/fakes"
+	"github.com/inx51/howlite/resources/storage/fakestorage"
 	"github.com/inx51/howlite/resources/testing/utilities"
 	"github.com/inx51/howlite/resources/testing/utilities/tester"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +24,7 @@ func TestReplaceShouldReturnCreatedStatusWhenNewResourceCreated(t *testing.T) {
 		`,
 	)
 
-	handler.ReplaceResource(utilities.CreateHandlerParameters(tester, fakes.NewStorage()))
+	handler.ReplaceResource(utilities.CreateHandlerParameters(tester, fakestorage.NewStorage()))
 	tester.PopulateResponse()
 
 	assert.Equal(t, 201, tester.Response.StatusCode)
@@ -43,7 +43,7 @@ func TestReplaceShouldReturnLocationHeaderWhenNewResourceCreated(t *testing.T) {
 		`,
 	)
 
-	handler.ReplaceResource(utilities.CreateHandlerParameters(tester, fakes.NewStorage()))
+	handler.ReplaceResource(utilities.CreateHandlerParameters(tester, fakestorage.NewStorage()))
 	tester.PopulateResponse()
 
 	assert.NotNil(t, tester.Response.Headers.Get("Location"))
@@ -51,7 +51,7 @@ func TestReplaceShouldReturnLocationHeaderWhenNewResourceCreated(t *testing.T) {
 }
 
 func TestReplaceShouldReturnNoContentWhenResourceReplaced(t *testing.T) {
-	storage := fakes.NewStorage()
+	storage := fakestorage.NewStorage()
 
 	storage.AddTestResource("/test", nil, []byte{0x001, 0x002, 0x003})
 
@@ -74,7 +74,7 @@ func TestReplaceShouldReturnNoContentWhenResourceReplaced(t *testing.T) {
 }
 
 func TestReplaceShouldReturnLocationHeaderWhenResourceReplaced(t *testing.T) {
-	storage := fakes.NewStorage()
+	storage := fakestorage.NewStorage()
 
 	storage.AddTestResource("/test", nil, []byte{0x001, 0x002, 0x003})
 

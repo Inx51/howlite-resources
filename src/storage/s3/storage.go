@@ -14,7 +14,6 @@ import (
 	aws "github.com/aws/aws-sdk-go-v2/aws"
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	awscred "github.com/aws/aws-sdk-go-v2/credentials"
-	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/inx51/howlite/resources/config"
 	"github.com/inx51/howlite/resources/resource"
 	"go.opentelemetry.io/otel"
@@ -26,7 +25,7 @@ type S3 struct {
 	bucket         string
 	prefix         string
 	tracer         trace.Tracer
-	client         *awss3.Client
+	client         AwsS3Client
 	uploadStrategy string
 	partUploadSize int
 }
@@ -49,12 +48,12 @@ func NewStorage(config config.S3Configuration, logger *slog.Logger) (*S3, error)
 		s3config.BaseEndpoint = &config.ENDPOINT
 	}
 
-	s3client := awss3.NewFromConfig(s3config)
+	s3client := NewAwsS3Client(s3config)
 
 	return &S3{
 		bucket:         config.BUCKET,
 		prefix:         config.PREFIX,
-		client:         s3client,
+		client:         *s3client,
 		logger:         logger,
 		tracer:         tracer,
 		uploadStrategy: config.UPLOAD_STRATEGY,
@@ -72,10 +71,9 @@ func (s3 *S3) RemoveResourceContext(ctx context.Context, resourceIdentifier *res
 
 	s3.logger.DebugContext(ctx, "Trying to remove resource file", "resourceIdentifier", resourceIdentifier.Value, "key", key)
 
-	_, err := s3.client.DeleteObject(ctx, &awss3.DeleteObjectInput{
-		Bucket: &s3.bucket,
-		Key:    key,
-	})
+	err := s3.client.DeleteObject(ctx,
+		&s3.bucket,
+		key)
 
 	if err != nil {
 
@@ -90,34 +88,21 @@ func (s3 *S3) RemoveResourceContext(ctx context.Context, resourceIdentifier *res
 func (s3 *S3) NewResourceWriterContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error) {
 	key := *s3.resourceKey(resourceIdentifier)
 
-	output, err := s3.client.CreateMultipartUpload(ctx, &awss3.CreateMultipartUploadInput{
-		Bucket: &s3.bucket,
-		Key:    &key,
-	})
-
-	if err != nil {
-		s3.logger.ErrorContext(ctx, "Failed to create multipart upload", "resourceIdentifier", resourceIdentifier.Value, "key", key, "error", err)
-		return nil, err
-	}
-
 	switch strings.ToLower(s3.uploadStrategy) {
 	case "multipart":
-		return &multipartWriter{
-			ctx:      &ctx,
-			bucket:   &s3.bucket,
-			key:      &key,
-			client:   s3.client,
-			uploadId: output.UploadId,
-			logger:   s3.logger,
-			buffer:   &bytes.Buffer{},
-			partSize: s3.partUploadSize,
-		}, nil
+		return NewMultipartWriter(
+			&ctx,
+			&s3.bucket,
+			&key,
+			&s3.client,
+			s3.logger,
+			s3.partUploadSize)
 	case "singlepart":
 		return &singlePartWriter{
 			ctx:    &ctx,
 			bucket: &s3.bucket,
 			key:    &key,
-			client: s3.client,
+			client: &s3.client,
 			logger: s3.logger,
 			buffer: &bytes.Buffer{},
 		}, nil
@@ -128,10 +113,9 @@ func (s3 *S3) NewResourceWriterContext(ctx context.Context, resourceIdentifier *
 }
 
 func (s3 *S3) ResourceExistsContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
-	_, err := s3.client.HeadObject(ctx, &awss3.HeadObjectInput{
-		Bucket: &s3.bucket,
-		Key:    s3.resourceKey(resourceIdentifier),
-	})
+	err := s3.client.HeadObject(ctx,
+		&s3.bucket,
+		s3.resourceKey(resourceIdentifier))
 
 	if err != nil {
 		var responseError *awshttp.ResponseError
@@ -148,10 +132,10 @@ func (s3 *S3) GetResourceContext(ctx context.Context, resourceIdentifier *resour
 
 	key := s3.resourceKey(resourceIdentifier)
 
-	output, err := s3.client.GetObject(ctx, &awss3.GetObjectInput{
-		Bucket: &s3.bucket,
-		Key:    key,
-	})
+	output, err := s3.client.GetObject(ctx,
+		&s3.bucket,
+		key)
+
 	if err != nil {
 		s3.logger.ErrorContext(ctx, "Failed to get resource file", "resourceIdentifier", resourceIdentifier.Value, "key", key, "error", err)
 		return nil, err
