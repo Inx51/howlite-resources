@@ -1,4 +1,4 @@
-package utilities
+package logging
 
 type TestingLogWriter struct {
 }

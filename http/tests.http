@@ -1,12 +1,21 @@
-POST http://localhost:8080/abcdaasd
+POST http://localhost:8080/abcdaasdasdasdasdasdasdasdasdasdasd
 Content-Type: application/json
 
 {"name":"John Doe","age":30,"city":"New York"}
 
 ###
 
-GET http://localhost:8080/abcdaasd
+GET http://localhost:8080/abcdaasdasdasdasdasdasdasdasdasdasd
 
 ###
 
-DELETE http://localhost:8080/abcdaasd
+DELETE http://localhost:8080/abcdaasdasdasdasdasdasdasdasdasdasd
+
+###
+HEAD http://localhost:8080/abcdaasdasdasdasdasdasdasdasdasdasd
+
+###
+PUT http://localhost:8080/abcdaasdasdasdasdasdasdasdasdasdasd
+Content-Type: application/json
+
+{"name":"John Doe 123","age":30,"city":"New York"}

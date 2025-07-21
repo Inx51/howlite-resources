@@ -1,4 +1,4 @@
-package fakes
+package fakestorage
 
 import (
 	"bytes"

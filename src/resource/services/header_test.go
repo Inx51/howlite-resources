@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/inx51/howlite/resources/resource/services"
-	"github.com/inx51/howlite/resources/testing/utilities"
+	"github.com/inx51/howlite/resources/testing/utilities/logging"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldFilterOutInvalidResponseHeaders(t *testing.T) {
-	logger := slog.New(slog.NewTextHandler(&utilities.TestingLogWriter{}, nil))
+	logger := slog.New(slog.NewTextHandler(&logging.TestingLogWriter{}, nil))
 	expected := map[string][]string{
 		"Content-Type": {"application/json"},
 		"X-Custom":     {"custom-value"},
@@ -36,7 +36,7 @@ func TestShouldFilterOutInvalidResponseHeaders(t *testing.T) {
 }
 
 func TestShouldAllowHeadersThatsNotInvalid(t *testing.T) {
-	logger := slog.New(slog.NewTextHandler(&utilities.TestingLogWriter{}, nil))
+	logger := slog.New(slog.NewTextHandler(&logging.TestingLogWriter{}, nil))
 	testHeaders := map[string][]string{
 		"X-MyHeader":     {"abcd"},
 		"Content-Length": {"123"},
@@ -54,7 +54,7 @@ func TestShouldAllowHeadersThatsNotInvalid(t *testing.T) {
 }
 
 func TestShouldPassIfAllProvidedHeadersAreInvalid(t *testing.T) {
-	logger := slog.New(slog.NewTextHandler(&utilities.TestingLogWriter{}, nil))
+	logger := slog.New(slog.NewTextHandler(&logging.TestingLogWriter{}, nil))
 	testHeaders := map[string][]string{
 		"host":            {"127.0.0.1"},
 		"accept-encoding": {"deflate"},

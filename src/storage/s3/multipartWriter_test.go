@@ -1,68 +1,122 @@
-package s3_test
+package s3
 
 import (
+	"bytes"
 	"context"
-	"log/slog"
+	"math"
 	"testing"
 
-	"github.com/inx51/howlite/resources/storage/s3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-// fakeS3Client records uploaded parts for testing
-// You may need to adjust this to match the real s3.Client interface used in your writer
+func TestShouldCallCreateMultipartUploadContextWhenWritingWritingFirstBytes(t *testing.T) {
+	bucket := "Test"
+	key := "Test"
+	uploadId := "Test"
+	etag := "Test"
+	ctx := context.Background()
+	client := new(FakeClient)
+	multipartWriter := NewMultipartWriterWithContext(ctx, client, bucket, key, 1, &bytes.Buffer{})
+	client.On("UploadPartContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string"), mock.AnythingOfType("int32"), mock.AnythingOfType("*bytes.Reader")).Return(etag, nil)
+	client.On("CreateMultipartUploadContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).Return(&uploadId, nil)
 
-type fakeS3Client struct {
-	uploadedParts [][]byte
-	completed     bool
+	multipartWriter.Write(make([]byte, 1))
+
+	client.AssertCalled(t, "CreateMultipartUploadContext", mock.Anything, &bucket, &key)
 }
 
-func (f *fakeS3Client) UploadPart(part []byte) {
-	f.uploadedParts = append(f.uploadedParts, part)
+func TestShouldCallCompleteMultipartUploadContextWhenClosing(t *testing.T) {
+	bucket := "Test"
+	key := "Test"
+	ctx := context.Background()
+	client := new(FakeClient)
+	multipartWriter := NewMultipartWriterWithContext(ctx, client, bucket, key, 1, &bytes.Buffer{})
+	client.On("CompleteMultipartUploadContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string"), mock.AnythingOfType("[]s3.CompletedPart")).Return(nil)
+
+	multipartWriter.Close()
+
+	client.AssertCalled(t, "CompleteMultipartUploadContext", mock.Anything, &bucket, &key, mock.AnythingOfType("[]s3.CompletedPart"))
 }
 
-func (f *fakeS3Client) CompleteMultipartUpload() {
-	f.completed = true
+func TestShouldResetBufferWhenBytesOfPartSizeWritten(t *testing.T) {
+	bucket := "Test"
+	key := "Test"
+	uploadId := "Test"
+	etag := "Test"
+	bytesWritten := 17
+	buffer := bytes.Buffer{}
+	ctx := context.Background()
+	client := new(FakeClient)
+	client.On("CreateMultipartUploadContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).Return(&uploadId, nil)
+	client.On("UploadPartContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string"), mock.AnythingOfType("int32"), mock.AnythingOfType("*bytes.Reader")).Return(etag, nil)
+	multipartWriter := NewMultipartWriterWithContext(ctx, client, bucket, key, 15, &buffer)
+
+	multipartWriter.Write(make([]byte, bytesWritten))
+
+	assert.Equal(t, 0, buffer.Len())
 }
 
-func newTestMultipartWriter(partSize int) (*s3.MultipartWriter, *fakeS3Client) {
-	fake := fakeS3Client{}
-	context := context.Background()
-	bucket := "test-bucket"
-	key := "test-key"
-	writer, _ := s3.NewMultipartWriter(&context, &bucket, &key, &fake, slog.Default(), partSize)
-	return writer, fake
+func TestShouldCallUploadPartContextMultipleTimesAndNotMissCallForRemaningBytes(t *testing.T) {
+	bucket := "Test"
+	key := "Test"
+	uploadId := "Test"
+	etag := "Test"
+	bytesWritten := 112
+	bytesInPart := 10
+	parts := math.Ceil(float64(bytesWritten) / float64(bytesInPart))
+	buffer := bytes.Buffer{}
+	ctx := context.Background()
+	client := new(FakeClient)
+	client.On("CreateMultipartUploadContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).Return(&uploadId, nil)
+	client.On("UploadPartContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string"), mock.AnythingOfType("int32"), mock.AnythingOfType("*bytes.Reader")).Return(etag, nil)
+	multipartWriter := NewMultipartWriterWithContext(ctx, client, bucket, key, bytesInPart, &buffer)
+
+	multipartWriter.Write(make([]byte, bytesWritten))
+
+	client.AssertNumberOfCalls(t, "UploadPartContext", int(math.Ceil(parts)))
+	//ensure that the buffer is empty
+	assert.Equal(t, 0, buffer.Len())
 }
 
-// ctx *context.Context,
-// 	bucket *string,
-// 	key *string,
-// 	client *s3.Client,
-// 	logger *slog.Logger,
-// 	partSize int
+func TestShouldCallUploadPartContextMultipleTimesForEvenPartSizeAndBytes(t *testing.T) {
+	bucket := "Test"
+	key := "Test"
+	uploadId := "Test"
+	etag := "Test"
+	bytesWritten := 100
+	bytesInPart := 10
+	buffer := bytes.Buffer{}
+	ctx := context.Background()
+	client := new(FakeClient)
+	client.On("CreateMultipartUploadContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).Return(&uploadId, nil)
+	client.On("UploadPartContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string"), mock.AnythingOfType("int32"), mock.AnythingOfType("*bytes.Reader")).Return(etag, nil)
+	multipartWriter := NewMultipartWriterWithContext(ctx, client, bucket, key, bytesInPart, &buffer)
 
-func TestWriterShouldUploadInMultipleParts(t *testing.T) {
-	writer, fake := newTestMultipartWriter(5)
-	data := []byte("abcdefghij") // 10 bytes, should be 2 parts of 5
-	writer.Write(data)
-	writer.Close()
-	assert.Equal(t, 2, len(fake.uploadedParts))
+	multipartWriter.Write(make([]byte, bytesWritten))
+
+	client.AssertNumberOfCalls(t, "UploadPartContext", 10)
+	//ensure that the buffer is empty
+	assert.Equal(t, 0, buffer.Len())
 }
 
-func TestWriterShouldUploadInMultiplePartsEvenIfLastPartIsOdd(t *testing.T) {
-	writer, fake := newTestMultipartWriter(4)
-	data := []byte("abcdefg") // 7 bytes, should be 2 parts: 4 and 3
-	_, err := writer.Write(data)
-	assert.NoError(t, err)
-	writer.Close()
-	// assert.Equal(t, 2, len(fake.uploadedParts))
-}
+func TestShouldCallUploadPartContextOneTimeIfBytesAreFeverThanPartSize(t *testing.T) {
+	bucket := "Test"
+	key := "Test"
+	uploadId := "Test"
+	etag := "Test"
+	bytesWritten := 20
+	bytesInPart := 100
+	buffer := bytes.Buffer{}
+	ctx := context.Background()
+	client := new(FakeClient)
+	client.On("CreateMultipartUploadContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).Return(&uploadId, nil)
+	client.On("UploadPartContext", mock.Anything, mock.AnythingOfType("*string"), mock.AnythingOfType("*string"), mock.AnythingOfType("int32"), mock.AnythingOfType("*bytes.Reader")).Return(etag, nil)
+	multipartWriter := NewMultipartWriterWithContext(ctx, client, bucket, key, bytesInPart, &buffer)
 
-func TestWriterShouldUploadInMultiplePartsEvenIfOnlySinglePart(t *testing.T) {
-	writer, fake := newTestMultipartWriter(10)
-	data := []byte("abc") // 3 bytes, should be 1 part
-	_, err := writer.Write(data)
-	assert.NoError(t, err)
-	writer.Close()
-	// assert.Equal(t, 1, len(fake.uploadedParts))
+	multipartWriter.Write(make([]byte, bytesWritten))
+
+	client.AssertNumberOfCalls(t, "UploadPartContext", 1)
+	//ensure that the buffer is empty
+	assert.Equal(t, 0, buffer.Len())
 }

@@ -22,7 +22,7 @@ type Storage struct {
 }
 
 func NewStorage(config config.FilesystemConfiguration, logger *slog.Logger) *Storage {
-	tracer := otel.Tracer("FileSystemStorage")
+	tracer := otel.Tracer("FileSystem")
 	return &Storage{
 		StoragePath: config.PATH,
 		logger:      logger,
@@ -31,7 +31,7 @@ func NewStorage(config config.FilesystemConfiguration, logger *slog.Logger) *Sto
 }
 
 func (fileSystem *Storage) GetName() string {
-	return "FileSystemStorage"
+	return "FileSystem"
 }
 
 func (fileSystem *Storage) RemoveResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {

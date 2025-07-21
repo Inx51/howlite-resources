@@ -15,7 +15,8 @@ func Create(logger *slog.Logger, config config.StorageProvider) (Storage, error)
 	case "filesystem":
 		return filesystem.NewStorage(config.STORAGE_PROVIDER_FILESYSTEM, logger), nil
 	case "s3":
-		return s3.NewStorage(config.STORAGE_PROVIDER_S3, logger)
+		client := s3.NewAwsClient(&config.STORAGE_PROVIDER_S3)
+		return s3.NewStorage(config.STORAGE_PROVIDER_S3, client, logger)
 	default:
 		return nil, fmt.Errorf("unsupported storage provider: %s", config.STORAGE_PROVIDER)
 	}

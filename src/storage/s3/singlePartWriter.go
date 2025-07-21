@@ -3,32 +3,31 @@ package s3
 import (
 	"bytes"
 	"context"
-	"log/slog"
 )
 
-type singlePartWriter struct {
-	ctx    *context.Context
-	bucket *string
-	key    *string
-	client S3Client
-	logger *slog.Logger
-	buffer *bytes.Buffer
+type singlepartWriter struct {
+	bucketName string
+	key        string
+	client     Client
+	ctx        context.Context
+	buffer     bytes.Buffer
 }
 
-func (writer *singlePartWriter) Write(p []byte) (int, error) {
-	return writer.buffer.Write(p)
-}
-
-func (writer *singlePartWriter) Close() error {
-	err := writer.client.PutObject(*writer.ctx,
-		writer.bucket,
-		writer.key,
-		*bytes.NewReader(writer.buffer.Bytes()))
-
-	if err != nil {
-		writer.logger.ErrorContext(*writer.ctx, "Failed to upload single part", "error", err)
-		return err
+func NewSinglepartWriterWithContext(ctx context.Context, client Client, bucketName string, key string, buffer *bytes.Buffer) *singlepartWriter {
+	return &singlepartWriter{
+		bucketName: bucketName,
+		key:        key,
+		client:     client,
+		ctx:        ctx,
+		buffer:     *buffer,
 	}
+}
 
-	return nil
+func (singlepartWriter *singlepartWriter) Write(p []byte) (int, error) {
+	return singlepartWriter.buffer.Write(p)
+}
+
+func (singlepartWriter *singlepartWriter) Close() error {
+	data := bytes.NewReader(singlepartWriter.buffer.Bytes())
+	return singlepartWriter.client.PutObjectContext(singlepartWriter.ctx, &singlepartWriter.bucketName, &singlepartWriter.key, data)
 }
