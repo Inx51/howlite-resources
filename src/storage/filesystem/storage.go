@@ -5,92 +5,104 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"errors"
-	"io"
-	"log/slog"
 	"os"
 
-	"github.com/inx51/howlite/resources/config"
-	"github.com/inx51/howlite/resources/resource"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
+	"github.com/inx51/howlite-resources/logger"
+	"github.com/inx51/howlite-resources/resource"
+	"github.com/inx51/howlite-resources/storage"
+	"github.com/inx51/howlite-resources/tracer"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type Storage struct {
-	logger      *slog.Logger
 	StoragePath string
-	tracer      trace.Tracer
 }
 
-func NewStorage(config config.FilesystemConfiguration, logger *slog.Logger) *Storage {
-	tracer := otel.Tracer("FileSystem")
-	return &Storage{
-		StoragePath: config.PATH,
-		logger:      logger,
-		tracer:      tracer,
-	}
-}
-
-func (fileSystem *Storage) GetName() string {
-	return "FileSystem"
-}
-
-func (fileSystem *Storage) RemoveResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
-	path := fileSystem.resourcePath(*resourceIdentifier)
-	fileSystem.logger.DebugContext(ctx, "Trying to remove resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
-	err := os.Remove(path)
+func (fileSystem *Storage) GetResource(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (*resource.Resource, error) {
+	path := fileSystem.resourcePath(resourceIdentifier)
+	logger.Debug(ctx, "Trying to read resource from file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	osOpenCtx, span := tracer.StartDebugSpan(ctx, "os.open")
+	reader, err := os.Open(path)
+	tracer.SetDebugAttributes(osOpenCtx, span, attribute.String("path", path))
+	tracer.SafeEndSpan(span)
 	if err != nil {
-		fileSystem.logger.DebugContext(ctx, "Removing resource file failed with unhandled error", "resourceIdentifier", resourceIdentifier.Value, "file", path, "error", err)
+		if errors.Is(err, os.ErrNotExist) {
+			logger.Debug(ctx, "Could not find resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+			return nil, err
+		}
+		logger.Error(ctx, "Failed to read resource from file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+		return nil, err
+	}
+	resource, err := resource.LoadResource(resourceIdentifier, reader)
+	logger.Debug(ctx, "Read resource from file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	return resource, err
+}
+
+func (fileSystem *Storage) RemoveResource(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
+	path := fileSystem.resourcePath(resourceIdentifier)
+	logger.Debug(ctx, "Trying to remove resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	logger.Debug(ctx, "Trying to read resource from file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	osRemoveCtx, span := tracer.StartDebugSpan(ctx, "os.remove")
+	err := os.Remove(path)
+	tracer.SetDebugAttributes(osRemoveCtx, span, attribute.String("path", path))
+	tracer.SafeEndSpan(span)
+	if err != nil {
+		logger.Debug(ctx, "Removing resource file failed with unhandled error", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path, "error", err)
 		return err
 	}
-	fileSystem.logger.InfoContext(ctx, "Successfully removed resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
+	logger.Info(ctx, "Successfully removed resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
 	return nil
 }
 
-func (fileSystem *Storage) NewResourceWriterContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.WriteCloser, error) {
-	path := fileSystem.resourcePath(*resourceIdentifier)
-	fileSystem.logger.DebugContext(ctx, "Trying to create new writer for resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
-	writer, err := os.Create(path)
-	if err != nil {
-		fileSystem.logger.ErrorContext(ctx, "Failed to create new writer for resource file", "resourceIdentifier", resourceIdentifier.Value, "path", path, "error", err)
-		return nil, err
-	}
-	fileSystem.logger.DebugContext(ctx, "Successfully created new writer for resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
-	return writer, nil
-}
-
-func (fileSystem *Storage) ResourceExistsContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
-	path := fileSystem.resourcePath(*resourceIdentifier)
-	fileSystem.logger.DebugContext(ctx, "Trying to validate if resource file exists", "resourceIdentifier", resourceIdentifier.Value, "file", path)
+func (fileSystem *Storage) ResourceExists(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
+	path := fileSystem.resourcePath(resourceIdentifier)
+	logger.Debug(ctx, "Trying to validate if resource file exists", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	osStatCtx, span := tracer.StartDebugSpan(ctx, "os.stat")
 	_, err := os.Stat(path)
+	tracer.SetDebugAttributes(osStatCtx, span, attribute.String("path", path))
+	tracer.SafeEndSpan(span)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			fileSystem.logger.DebugContext(ctx, "Could not find resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
+			logger.Debug(ctx, "Could not find resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
 			return false, nil
 		}
-		fileSystem.logger.ErrorContext(ctx, "Failed to find resource with unhandled error", "error", err)
+		logger.Error(ctx, "Failed to find resource with unhandled error", "error", err)
 		return false, err
 	}
-	fileSystem.logger.DebugContext(ctx, "Found resource file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
+	logger.Debug(ctx, "Found resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
 	return true, nil
 }
 
-func (fileSystem *Storage) GetResourceContext(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (io.ReadCloser, error) {
-	path := fileSystem.resourcePath(*resourceIdentifier)
-	fileSystem.logger.DebugContext(ctx, "Trying to read resource from file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
-	reader, err := os.Open(path)
+func NewStorage(storagePath string) storage.Storage {
+	return &Storage{StoragePath: storagePath}
+}
+
+func (fileSystem *Storage) GetName() string {
+	return "filesystem"
+}
+
+func (fileSystem *Storage) SaveResource(ctx context.Context, resource *resource.Resource) error {
+	path := fileSystem.resourcePath(resource.Identifier)
+	logger.Debug(ctx, "Trying to create new writer for resource file", "resourceIdentifier", resource.Identifier.Identifier(), "file", path)
+	osCreateCtx, span := tracer.StartDebugSpan(ctx, "os.create")
+	writer, err := os.Create(path)
+	tracer.SetDebugAttributes(osCreateCtx, span, attribute.String("path", path))
+	tracer.SafeEndSpan(span)
 	if err != nil {
-		fileSystem.logger.ErrorContext(ctx, "Failed to read resource from file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
-		return nil, err
+		logger.Error(ctx, "Failed to create new writer for resource file", "resourceIdentifier", resource.Identifier.Identifier(), "path", path, "error", err)
+		return err
 	}
-	fileSystem.logger.DebugContext(ctx, "Read resource from file", "resourceIdentifier", resourceIdentifier.Value, "file", path)
-	return reader, nil
+	logger.Debug(ctx, "Successfully created new writer for resource file", "resourceIdentifier", resource.Identifier.Identifier(), "file", path)
+	resource.Write(writer)
+	writer.Close()
+	return nil
 }
 
-func (fileSystem *Storage) resourcePath(resourceIdentifier resource.ResourceIdentifier) string {
-	return fileSystem.StoragePath + "\\" + identifierToStringVersion(resourceIdentifier) + ".bin"
+func (fileSystem *Storage) resourcePath(resourceIdentifier *resource.ResourceIdentifier) string {
+	return fileSystem.StoragePath + "/" + identifierToStringVersion(resourceIdentifier) + ".bin"
 }
 
-func identifierToStringVersion(resourceIdentifier resource.ResourceIdentifier) string {
-	var encBytes = md5.Sum([]byte(*resourceIdentifier.Value))
+func identifierToStringVersion(resourceIdentifier *resource.ResourceIdentifier) string {
+	var encBytes = md5.Sum([]byte(resourceIdentifier.Identifier()))
 	return base64.URLEncoding.EncodeToString(encBytes[:])
 }

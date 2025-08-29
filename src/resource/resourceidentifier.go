@@ -1,11 +1,15 @@
 package resource
 
 type ResourceIdentifier struct {
-	Value *string
+	identifier string
 }
 
-func NewResourceIdentifier(value *string) *ResourceIdentifier {
+func NewResourceIdentifier(identifier string) *ResourceIdentifier {
 	return &ResourceIdentifier{
-		Value: value,
+		identifier: identifier,
 	}
+}
+
+func (resourceIdentifier *ResourceIdentifier) Identifier() string {
+	return resourceIdentifier.identifier
 }

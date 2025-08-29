@@ -1,3 +1,7 @@
 .vscode
 /src/local.env
 main.exe
+
+/src/main.exe
+/src/tmp
+/tmp

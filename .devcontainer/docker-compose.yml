@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  howlite-resources:
+    image: mcr.microsoft.com/devcontainers/go:1-1.24-bookworm
+    volumes:
+      - ./..:/workspaces/howlite-resources-v3:cached
+    command: sleep infinity
+    environment:
+      - GO_ENV=development
+      - OTEL_EXPORTER_OTLP_ENDPOINT='http://aspire:18889'
+      - OTEL_EXPORTER_OTLP_PROTOCOL='grpc'
+      - OTEL_EXPORTER_OTLP_INSECURE=true
+      - OTEL_SERVICE_NAME='howlite.resources'
+    ports:
+      - "8085:8085"
+  aspire:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.3
+    environment:
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=1
+    ports:
+      - "18888:18888"

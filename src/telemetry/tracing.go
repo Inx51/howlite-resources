@@ -4,39 +4,51 @@ import (
 	"context"
 	"os"
 
-	"github.com/inx51/howlite/resources/config"
+	"github.com/inx51/howlite-resources/configuration"
+	"github.com/inx51/howlite-resources/logger"
+	"github.com/inx51/howlite-resources/tracer"
 	"go.opentelemetry.io/contrib/exporters/autoexport"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
-func CreateOpenTelemetryTracer(conf config.OtelConfiguration) *oteltrace.Span {
-	ctx := context.Background()
+var tracerProvider *trace.TracerProvider
+
+func newTracerProvider(ctx context.Context) (*trace.TracerProvider, error) {
 	otlpExporter, err := autoexport.NewSpanExporter(ctx)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = "unknown"
 	}
-	tracerProvider := trace.NewTracerProvider(
+	provider := trace.NewTracerProvider(
 		trace.WithBatcher(otlpExporter),
 		trace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(conf.OTEL_SERVICE_NAME),
 			semconv.ProcessPID(os.Getpid()),
 			semconv.HostNameKey.String(hostname),
 		)),
 	)
+	return provider, nil
+}
 
+func SetupTracing(ctx context.Context, configuration *configuration.Tracing) {
+	var err error
+	tracerProvider, err = newTracerProvider(ctx)
+	if err != nil {
+		panic(err)
+	}
 	otel.SetTracerProvider(tracerProvider)
+	tracer.SetupTracer(configuration)
+}
 
-	_, span := tracerProvider.Tracer("howlite.resources").Start(ctx, "Initialize")
-
-	return &span
+func ShutdownTracing(ctx context.Context) {
+	if err := tracerProvider.Shutdown(ctx); err != nil {
+		logger.Error(ctx, "OpenTelemetry failed to shutdown tracer provider", "error", err)
+		return
+	}
 }
