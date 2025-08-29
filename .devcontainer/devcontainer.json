@@ -1,0 +1,19 @@
+{
+  "name": "howlite-resources dev container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "howlite-resources",
+  "workspaceFolder": "/workspaces/howlite-resources-v3",
+  "shutdownAction": "stopCompose",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.Go",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml"
+      ]
+    }
+  },
+  "forwardPorts": [8085,18888,55791],
+  "remoteUser": "vscode"
+}
