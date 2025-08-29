@@ -18,7 +18,7 @@ type Tracing struct {
 
 type HttpServer struct {
 	HOST          string `env:"HOWLITE_RESOURCE_HTTP_SERVER_HOST" envDefault:"localhost"`
-	PORT          int    `env:"HOWLITE_RESOURCE_HTTP_SERVER_PORT" envDefault:"808"`
+	PORT          int    `env:"HOWLITE_RESOURCE_HTTP_SERVER_PORT" envDefault:"8080"`
 	IDLE_TIMEOUT  string `env:"HOWLITE_RESOURCE_HTTP_SERVER_IDLE_TIMEOUT" envDefault:"30s"`
 	READ_TIMEOUT  string `env:"HOWLITE_RESOURCE_HTTP_SERVER_READ_TIMEOUT" envDefault:"30s"`
 	WRITE_TIMEOUT string `env:"HOWLITE_RESOURCE_HTTP_SERVER_WRITE_TIMEOUT" envDefault:"30s"`
@@ -33,13 +33,13 @@ type OtelConfiguration struct {
 }
 
 type StorageProvider struct {
-	NAME                        string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_NAME"`
+	NAME                        string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_NAME" envDefault:"filesystem"`
 	STORAGE_PROVIDER_FILESYSTEM FilesystemConfiguration
 	STORAGE_PROVIDER_S3         S3Configuration
 }
 
 type FilesystemConfiguration struct {
-	PATH string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_FILESYSTEM_PATH"`
+	PATH string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_FILESYSTEM_PATH" envDefault:"./tmp/howlite"`
 }
 
 type S3Configuration struct {
