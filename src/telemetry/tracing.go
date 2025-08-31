@@ -36,7 +36,9 @@ func newTracerProvider(ctx context.Context) (*trace.TracerProvider, error) {
 	return provider, nil
 }
 
-func SetupTracing(ctx context.Context, configuration *configuration.Tracing) {
+func SetupTracing(
+	ctx context.Context,
+	configuration *configuration.Tracing) {
 	var err error
 	tracerProvider, err = newTracerProvider(ctx)
 	if err != nil {

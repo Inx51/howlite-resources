@@ -4,7 +4,7 @@ services:
   howlite-resources:
     image: mcr.microsoft.com/devcontainers/go:1-1.24-bookworm
     volumes:
-      - ./..:/workspaces/howlite-resources-v3:cached
+      - ./..:/workspaces/howlite-resources:cached
     command: sleep infinity
     environment:
       - GO_ENV=development

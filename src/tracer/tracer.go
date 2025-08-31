@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/inx51/howlite-resources/configuration"
-	"github.com/inx51/howlite-resources/test"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -15,10 +14,8 @@ var tracer trace.Tracer
 var level int = -1
 
 func SetupTracer(configuration *configuration.Tracing) {
-	if !test.IsTestRun() {
-		tracer = otel.Tracer("howlite-resources")
-		setLevel(configuration.LEVEL)
-	}
+	tracer = otel.Tracer("howlite-resources")
+	setLevel(configuration.LEVEL)
 }
 
 func StartSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {

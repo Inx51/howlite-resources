@@ -2,7 +2,7 @@
   "name": "howlite-resources dev container",
   "dockerComposeFile": "docker-compose.yml",
   "service": "howlite-resources",
-  "workspaceFolder": "/workspaces/howlite-resources-v3",
+  "workspaceFolder": "/workspaces/howlite-resources",
   "shutdownAction": "stopCompose",
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "customizations": {

@@ -50,7 +50,7 @@ func (fileSystem *Storage) RemoveResource(ctx context.Context, resourceIdentifie
 		logger.Debug(ctx, "Removing resource file failed with unhandled error", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path, "error", err)
 		return err
 	}
-	logger.Info(ctx, "Successfully removed resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	logger.Debug(ctx, "Successfully removed resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
 	return nil
 }
 
