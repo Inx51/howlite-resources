@@ -19,6 +19,7 @@ var tracerProvider *trace.TracerProvider
 func newTracerProvider(ctx context.Context) (*trace.TracerProvider, error) {
 	otlpExporter, err := autoexport.NewSpanExporter(ctx)
 	if err != nil {
+		logger.Warn(ctx, "Failed to create tracing exporter for OpenTelemetry, skipping OpenTelemetry tracing", "error", err)
 		return nil, err
 	}
 	hostname, err := os.Hostname()
@@ -42,10 +43,10 @@ func SetupTracing(
 	var err error
 	tracerProvider, err = newTracerProvider(ctx)
 	if err != nil {
-		panic(err)
+		return
 	}
 	otel.SetTracerProvider(tracerProvider)
-	tracer.SetupTracer(configuration)
+	tracer.SetupTracer(configuration, tracerProvider != nil)
 }
 
 func ShutdownTracing(ctx context.Context) {

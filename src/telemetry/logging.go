@@ -22,7 +22,8 @@ func newLoggerProvider(ctx context.Context) (*log.LoggerProvider, error) {
 
 	otlpExporter, err := autoexport.NewLogExporter(ctx)
 	if err != nil {
-		panic(err)
+		logger.Warn(ctx, "Failed to create logging exporter for OpenTelemetry, skipping OpenTelemetry logging", "error", err)
+		return nil, err
 	}
 
 	provider := log.NewLoggerProvider(
@@ -40,7 +41,7 @@ func SetupLogging(ctx context.Context) {
 	var err error
 	loggerProvider, err = newLoggerProvider(ctx)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	global.SetLoggerProvider(loggerProvider)

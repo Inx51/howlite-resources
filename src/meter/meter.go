@@ -9,12 +9,23 @@ import (
 
 var meter metric.Meter
 var int64Counters map[string]metric.Int64Counter = make(map[string]metric.Int64Counter)
+var enabled bool = false
 
-func SetupMeter() {
+func SetupMeter(enable bool) {
+	enabled = enable
+
+	if !enabled {
+		return
+	}
+
 	meter = otel.Meter("howlite.resources")
 }
 
 func ArithmeticInt64Counter(ctx context.Context, counterName string, change int64, options ...metric.AddOption) {
+	if !enabled {
+		return
+	}
+
 	if int64Counters[counterName] == nil {
 		int64Counters[counterName], _ = meter.Int64Counter(counterName)
 	}

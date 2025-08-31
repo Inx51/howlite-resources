@@ -12,17 +12,32 @@ import (
 
 var tracer trace.Tracer
 var level int = -1
+var enabled bool = false
 
-func SetupTracer(configuration *configuration.Tracing) {
+func SetupTracer(configuration *configuration.Tracing, enable bool) {
+	enabled = enable
+
+	if !enabled {
+		return
+	}
+
 	tracer = otel.Tracer("howlite-resources")
 	setLevel(configuration.LEVEL)
 }
 
 func StartSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	if !enabled {
+		return ctx, nil
+	}
+
 	return tracer.Start(ctx, name, opts...)
 }
 
 func StartInfoSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	if !enabled {
+		return ctx, nil
+	}
+
 	if level <= 1 {
 		return StartSpan(ctx, name, opts...)
 	}
@@ -30,6 +45,10 @@ func StartInfoSpan(ctx context.Context, name string, opts ...trace.SpanStartOpti
 }
 
 func StartDebugSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	if !enabled {
+		return ctx, nil
+	}
+
 	if level == 0 {
 		return StartSpan(ctx, name, opts...)
 	}
@@ -37,6 +56,10 @@ func StartDebugSpan(ctx context.Context, name string, opts ...trace.SpanStartOpt
 }
 
 func SafeEndSpan(span trace.Span) {
+	if !enabled {
+		return
+	}
+
 	if span != nil {
 		(span).End()
 	}
@@ -62,12 +85,20 @@ func setLevel(traceLevel string) int {
 }
 
 func SetDebugAttributes(ctx context.Context, span trace.Span, kv ...attribute.KeyValue) {
+	if !enabled {
+		return
+	}
+
 	if level == 0 {
 		span.SetAttributes(kv...)
 	}
 }
 
 func SetInfoAttributes(ctx context.Context, span trace.Span, kv ...attribute.KeyValue) {
+	if !enabled {
+		return
+	}
+
 	if level <= 1 {
 		span.SetAttributes(kv...)
 	}

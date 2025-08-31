@@ -15,7 +15,8 @@ var meterProvider *metric.MeterProvider
 func newMeterProvider(ctx context.Context) (*metric.MeterProvider, error) {
 	otlpMetricReader, err := autoexport.NewMetricReader(ctx)
 	if err != nil {
-		panic(err)
+		logger.Warn(ctx, "Failed to create metrics exporter for OpenTelemetry, skipping OpenTelemetry metrics", "error", err)
+		return nil, err
 	}
 
 	provider := metric.NewMeterProvider(
@@ -28,11 +29,11 @@ func SetupMetric(ctx context.Context) {
 	var err error
 	meterProvider, err = newMeterProvider(ctx)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	otel.SetMeterProvider(meterProvider)
-	meter.SetupMeter()
+	meter.SetupMeter(meterProvider != nil)
 }
 
 func ShutdownMetrics(ctx context.Context) {
