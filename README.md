@@ -54,8 +54,6 @@ Resource IDs are based on the request URL path.
 
 Set via environment variables or `.env` file:
 
-<summary><strong>Click to view all config options</strong></summary>
-
 ### HTTP Server
 
 | Variable | Default | Description |
