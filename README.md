@@ -96,11 +96,12 @@ Store resources in an S3-compatible object storage (e.g., AWS S3, MinIO).
 
 ### Telemetry
 
-Support for standard OTEL environemnt variables.
-
 | Variable | Default | Description |
 |---|---|---|
 | HOWLITE_RESOURCE_TRACING_LEVEL | Info | Tracing level |
+
+Support for standard OTEL environemnt variables.
+Read more [here](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/)
 
 ---
 
