@@ -68,6 +68,7 @@ func (handler *RemoveHandler) Handle(
 	}
 
 	meter.ArithmeticInt64Counter(ctx, "resources_removed_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
+	meter.ArithmeticInt64Counter(ctx, "resources_overall", -1)
 
 	resp.WriteHeader(statusCode)
 	logger.Info(ctx, "Removed resource", "resourceIdentifier", resourceIdentifier.Identifier())

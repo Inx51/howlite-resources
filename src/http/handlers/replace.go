@@ -75,6 +75,7 @@ func (handler *ReplaceHandler) Handle(
 	resp.Header().Add("Location", location)
 	if !resourceExists {
 		meter.ArithmeticInt64Counter(ctx, "resources_created_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
+		meter.ArithmeticInt64Counter(ctx, "resources_overall", 1)
 		logger.Info(ctx, "Resource created", "resourceIdentifier", resourceIdentifier.Identifier())
 		statusCode = http.StatusCreated
 		resp.WriteHeader(statusCode)

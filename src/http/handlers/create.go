@@ -74,6 +74,7 @@ func (handler *CreateHandler) Handle(
 	}
 
 	meter.ArithmeticInt64Counter(ctx, "resources_created_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
+	meter.ArithmeticInt64Counter(ctx, "resources_overall", 1)
 
 	location := uri.AbsoluteUri(req)
 	resp.Header().Add("Location", location)
