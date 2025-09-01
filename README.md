@@ -76,7 +76,7 @@ The default provider. Stores resources as files on the local disk.
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_NAME | filesystem | Selects the filesystem provider |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_FILESYSTEM_PATH | ./tmp/howlite | Directory for storing files |
 
-#### S3
+#### S3 (Work in progress)
 
 Store resources in an S3-compatible object storage (e.g., AWS S3, MinIO).
 
