@@ -50,7 +50,7 @@ go build -o howlite-resources ./src
 
 ## ⚙️ Configuration
 
-Set via environment variables or `.env` file:
+Set via environment variables.
 
 ### HTTP Server
 
