@@ -58,9 +58,9 @@ Set via environment variables.
 |---|---|---|
 | HOWLITE_RESOURCE_HTTP_SERVER_HOST | localhost | HTTP server host |
 | HOWLITE_RESOURCE_HTTP_SERVER_PORT | 8080 | HTTP server port |
-| HOWLITE_RESOURCE_HTTP_SERVER_IDLE_TIMEOUT | 30s | Idle timeout |
-| HOWLITE_RESOURCE_HTTP_SERVER_READ_TIMEOUT | 30s | Read timeout |
-| HOWLITE_RESOURCE_HTTP_SERVER_WRITE_TIMEOUT | 30s | Write timeout |
+| HOWLITE_RESOURCE_HTTP_SERVER_IDLE_TIMEOUT | 30s | Idle timeout of request/response |
+| HOWLITE_RESOURCE_HTTP_SERVER_READ_TIMEOUT | 30s | Read timeout of request/response |
+| HOWLITE_RESOURCE_HTTP_SERVER_WRITE_TIMEOUT | 30s | Write timeout of request/response |
 
 
 ### Storage Providers
@@ -98,7 +98,7 @@ Store resources in an S3-compatible object storage (e.g., AWS S3, MinIO).
 
 | Variable | Default | Description |
 |---|---|---|
-| HOWLITE_RESOURCE_TRACING_LEVEL | Info | Tracing level |
+| HOWLITE_RESOURCE_TRACING_LEVEL | Debug, Info | Tracing level |
 
 Support for standard OTEL environemnt variables.
 Read more [here](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/)
