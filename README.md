@@ -46,8 +46,6 @@ go build -o howlite-resources ./src
 | DELETE | /your/resource/path    | Remove resource |
 | HEAD   | /your/resource/path    | Resource exists |
 
-Resource IDs are based on the request URL path.
-
 ---
 
 ## ⚙️ Configuration
