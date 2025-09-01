@@ -5,9 +5,9 @@
 
 # Howlite Resources
 
-> Simple, pluggable HTTP resource store for fast prototyping and unstructured data.
+> Simple, pluggable HTTP resource store for fast prototyping and storage of any type of data.
 
-Howlite Resources lets you store, fetch, update, and delete any kind of resource (files, blobs, data) over HTTP. It's ideal for rapid prototyping, microservices, or as a backend for unstructured data.
+Howlite Resources lets you store, fetch, update, and delete any kind of resource (files, blobs, data) over HTTP. It's ideal for rapid prototyping, microservices, or as a backend for storing any type of data.
 
 ---
 
