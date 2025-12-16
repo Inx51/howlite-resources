@@ -63,7 +63,7 @@ func (s3Storage *Storage) ResourceExists(ctx context.Context, resourceIdentifier
 }
 
 func NewStorage(configuration *configuration.S3Configuration) storage.Storage {
-	cfg, err := loadAWSConfig(context.Background(), configuration)
+	cfg, err := loadConfig(context.Background(), configuration)
 	if err != nil {
 		panic(err)
 	}
@@ -71,12 +71,12 @@ func NewStorage(configuration *configuration.S3Configuration) storage.Storage {
 	client := s3.NewFromConfig(cfg)
 
 	uploader := manager.NewUploader(client, func(u *manager.Uploader) {
-		u.PartSize = int64(configuration.MULTIPART_PART_UPLOAD_SIZE)
-		u.Concurrency = 5
+		u.PartSize = configuration.PART_UPLOAD_SIZE
+		u.Concurrency = configuration.UPLOAD_CONCURRENCY
 	})
 
 	downloader := manager.NewDownloader(client, func(d *manager.Downloader) {
-		d.Concurrency = 5
+		d.Concurrency = configuration.DOWNLOAD_CONCURRENCY
 	})
 
 	return &Storage{
@@ -87,32 +87,33 @@ func NewStorage(configuration *configuration.S3Configuration) storage.Storage {
 	}
 }
 
-func loadAWSConfig(ctx context.Context, cfg *configuration.S3Configuration) (aws.Config, error) {
+func loadConfig(ctx context.Context, cfg *configuration.S3Configuration) (aws.Config, error) {
 	var options []func(*config.LoadOptions) error
+	applyRegion(cfg, options)
+	applyEndpoint(cfg, options)
+	applyCredentials(cfg, options)
 
-	//TODO: Make sure to extract this into functions..
-	if cfg.REGION != "" {
-		options = append(options, config.WithRegion(cfg.REGION))
+	return config.LoadDefaultConfig(ctx, options...)
+}
+
+func applyEndpoint(cfg *configuration.S3Configuration, options []func(*config.LoadOptions) error) {
+	if cfg.BASE_ENDPOINT != "" {
+		options = append(options, config.WithBaseEndpoint(cfg.BASE_ENDPOINT))
 	}
+}
 
-	if cfg.ENDPOINT != "" {
-		options = append(options, config.WithEndpointResolverWithOptions(
-			aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{
-					URL:               cfg.ENDPOINT,
-					HostnameImmutable: true,
-				}, nil
-			}),
-		))
-	}
-
+func applyCredentials(cfg *configuration.S3Configuration, options []func(*config.LoadOptions) error) {
 	if cfg.ACCESS_KEY != "" && cfg.SECRET_KEY != "" {
 		options = append(options, config.WithCredentialsProvider(
 			credentials.NewStaticCredentialsProvider(cfg.ACCESS_KEY, cfg.SECRET_KEY, ""),
 		))
 	}
+}
 
-	return config.LoadDefaultConfig(ctx, options...)
+func applyRegion(cfg *configuration.S3Configuration, options []func(*config.LoadOptions) error) {
+	if cfg.REGION != "" {
+		options = append(options, config.WithRegion(cfg.REGION))
+	}
 }
 
 func (s3Storage *Storage) GetName() string {
@@ -122,7 +123,6 @@ func (s3Storage *Storage) GetName() string {
 func (s3Storage *Storage) SaveResource(ctx context.Context, resource *resource.Resource) error {
 	reader := s3Storage.createResourceReader(resource)
 
-	// Use manager.Uploader for automatic multipart uploads with parallelization
 	_, err := s3Storage.uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s3Storage.configuration.BUCKET),
 		Key:    aws.String(resource.Identifier.ToUniqueFilename()),
