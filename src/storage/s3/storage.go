@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -23,11 +24,9 @@ type Storage struct {
 }
 
 func (s3Storage *Storage) GetResource(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (*resource.Resource, error) {
-	key := s3Storage.getObjectKey(resourceIdentifier)
-
 	result, err := s3Storage.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s3Storage.configuration.BUCKET),
-		Key:    aws.String(key),
+		Key:    aws.String(resourceIdentifier.ToUniqueFilename()),
 	})
 	if err != nil {
 		return nil, err
@@ -39,26 +38,22 @@ func (s3Storage *Storage) GetResource(ctx context.Context, resourceIdentifier *r
 }
 
 func (s3Storage *Storage) RemoveResource(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
-	key := s3Storage.getObjectKey(resourceIdentifier)
-
 	_, err := s3Storage.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(s3Storage.configuration.BUCKET),
-		Key:    aws.String(key),
+		Key:    aws.String(resourceIdentifier.ToUniqueFilename()),
 	})
 
 	return err
 }
 
 func (s3Storage *Storage) ResourceExists(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
-	key := s3Storage.getObjectKey(resourceIdentifier)
-
 	_, err := s3Storage.client.HeadObject(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(s3Storage.configuration.BUCKET),
-		Key:    aws.String(key),
+		Key:    aws.String(resourceIdentifier.ToUniqueFilename()),
 	})
 	if err != nil {
 		var notFound *types.NotFound
-		if aws.IsErrorAs(err, &notFound) {
+		if errors.As(err, &notFound) {
 			return false, nil
 		}
 		return false, err
