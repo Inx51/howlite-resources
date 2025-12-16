@@ -56,8 +56,9 @@ func (handler *CreateHandler) Handle(
 	}
 
 	resource := resource.NewResource(resourceIdentifier, &req.Body)
+	defer (*resource.Body).Close()
 	for k, v := range req.Header {
-		resource.Headers.Add(k, v)
+		resource.Headers.Add(ctx, k, v)
 	}
 	srCtx, span := tracer.StartInfoSpan(ctx, "storage."+storage.GetName()+".save_resource")
 	tracer.SetInfoAttributes(

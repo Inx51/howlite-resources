@@ -4,6 +4,7 @@ package resource_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"io"
 	"strings"
@@ -14,9 +15,10 @@ import (
 )
 
 func TestAddShouldAddHeaders(t *testing.T) {
+	ctx := context.Background()
 	resourceHeaders := resource.NewResourceHeaders()
-	resourceHeaders.Add("A", []string{"1", "2"})
-	resourceHeaders.Add("B", []string{"3"})
+	resourceHeaders.Add(ctx, "A", []string{"1", "2"})
+	resourceHeaders.Add(ctx, "B", []string{"3"})
 
 	headers := *resourceHeaders.Headers()
 
@@ -26,9 +28,10 @@ func TestAddShouldAddHeaders(t *testing.T) {
 }
 
 func TestAddShouldHaveValues(t *testing.T) {
+	ctx := context.Background()
 	resourceHeaders := resource.NewResourceHeaders()
-	resourceHeaders.Add("A", []string{"1", "2"})
-	resourceHeaders.Add("B", []string{"3"})
+	resourceHeaders.Add(ctx, "A", []string{"1", "2"})
+	resourceHeaders.Add(ctx, "B", []string{"3"})
 
 	headers := *resourceHeaders.Headers()
 
@@ -41,7 +44,6 @@ func TestAddShouldHaveValues(t *testing.T) {
 }
 
 func TestLoadHeadersShouldLoadHeadersFromReaderCloser(t *testing.T) {
-
 	resourceHeaders := resource.NewResourceHeaders()
 
 	originalHeaders := map[string][]string{"a": {"b", "c"}}
@@ -72,7 +74,6 @@ func TestLoadHeadersShouldLoadHeadersFromReaderCloser(t *testing.T) {
 }
 
 func TestLoadHeadersShouldAsEmptyFromEmptyReaderCloser(t *testing.T) {
-
 	resourceHeaders := resource.NewResourceHeaders()
 	var buf bytes.Buffer
 	l := make([]byte, 8)
@@ -84,5 +85,98 @@ func TestLoadHeadersShouldAsEmptyFromEmptyReaderCloser(t *testing.T) {
 
 	if len(headers) != 0 {
 		t.Fatalf("LoadHeaders did not load correctly: got %v, want empty", headers)
+	}
+}
+
+func TestAddShouldBlockReservedHeaders(t *testing.T) {
+	testCases := []struct {
+		name         string
+		headerName   string
+		headerValues []string
+		shouldBlock  bool
+	}{
+		{"content-length", "content-length", []string{"100"}, true},
+		{"transfer-encoding", "transfer-encoding", []string{"chunked"}, true},
+		{"connection", "connection", []string{"close"}, true},
+		{"upgrade", "upgrade", []string{"websocket"}, true},
+		{"server", "server", []string{"nginx/1.18"}, true},
+		{"date", "date", []string{"Mon, 09 Dec 2025 12:00:00 GMT"}, true},
+		{"trailer", "trailer", []string{"Expires"}, true},
+		{"set-cookie", "set-cookie", []string{"session=abc123"}, true},
+		{"set-cookie2", "set-cookie2", []string{"session=abc123"}, true},
+		{"location", "location", []string{"https://example.com"}, true},
+		{"retry-after", "retry-after", []string{"120"}, true},
+		{"vary", "vary", []string{"Accept-Encoding"}, true},
+		{"warning", "warning", []string{"110 anderson/1.3.37 \"Response is stale\""}, true},
+		{"www-authenticate", "www-authenticate", []string{"Basic realm=\"Access\""}, true},
+		{"proxy-authenticate", "proxy-authenticate", []string{"Basic realm=\"Proxy\""}, true},
+		{"age", "age", []string{"3600"}, true},
+		{"cache-control", "cache-control", []string{"no-cache"}, true},
+		{"expires", "expires", []string{"Mon, 09 Dec 2025 12:00:00 GMT"}, true},
+		{"last-modified", "last-modified", []string{"Mon, 09 Dec 2025 10:00:00 GMT"}, true},
+		{"etag", "etag", []string{"\"abc123\""}, true},
+		{"accept-ranges", "accept-ranges", []string{"bytes"}, true},
+		{"content-range", "content-range", []string{"bytes 200-1023/146515"}, true},
+		{"content-encoding", "content-encoding", []string{"gzip"}, true},
+		{"content-language", "content-language", []string{"en-US"}, true},
+		{"Content-Length mixed case", "Content-Length", []string{"100"}, true},
+		{"CONTENT-LENGTH uppercase", "CONTENT-LENGTH", []string{"100"}, true},
+		{"Set-Cookie mixed case", "Set-Cookie", []string{"session=abc123"}, true},
+		{"SERVER uppercase", "SERVER", []string{"apache"}, true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			resourceHeaders := resource.NewResourceHeaders()
+			resourceHeaders.Add(ctx, tc.headerName, tc.headerValues)
+
+			headers := *resourceHeaders.Headers()
+			_, exists := headers[tc.headerName]
+
+			if tc.shouldBlock && exists {
+				t.Fatalf("Expected header '%s' to be blocked, but it was added", tc.headerName)
+			}
+			if !tc.shouldBlock && !exists {
+				t.Fatalf("Expected header '%s' to be allowed, but it was blocked", tc.headerName)
+			}
+		})
+	}
+}
+
+func TestAddShouldAllowNonReservedHeaders(t *testing.T) {
+	testCases := []struct {
+		name         string
+		headerName   string
+		headerValues []string
+	}{
+		{"custom header", "X-Custom-Header", []string{"allowed"}},
+		{"custom app header", "X-App-Version", []string{"1.2.3"}},
+		{"multiple values", "X-Multi", []string{"value1", "value2", "value3"}},
+		{"another custom header", "MyHeader", []string{"value1"}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			resourceHeaders := resource.NewResourceHeaders()
+
+			resourceHeaders.Add(ctx, tc.headerName, tc.headerValues)
+
+			headers := *resourceHeaders.Headers()
+			values, exists := headers[tc.headerName]
+
+			if !exists {
+				t.Fatalf("Expected header '%s' to be allowed, but it was blocked", tc.headerName)
+			}
+			if len(values) != len(tc.headerValues) {
+				t.Fatalf("Expected %d values for header '%s', got %d", len(tc.headerValues), tc.headerName, len(values))
+			}
+			for i, expectedValue := range tc.headerValues {
+				if values[i] != expectedValue {
+					t.Fatalf("Expected value '%s' at index %d for header '%s', got '%s'", expectedValue, i, tc.headerName, values[i])
+				}
+			}
+		})
 	}
 }

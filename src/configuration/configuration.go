@@ -36,6 +36,7 @@ type StorageProvider struct {
 	NAME                        string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_NAME" envDefault:"filesystem"`
 	STORAGE_PROVIDER_FILESYSTEM FilesystemConfiguration
 	STORAGE_PROVIDER_S3         S3Configuration
+	STORAGE_PROVIDER_AZBLOB     AzureBlobStorageConfiguration
 }
 
 type FilesystemConfiguration struct {
@@ -51,6 +52,13 @@ type S3Configuration struct {
 	REGION                     string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_REGION"`
 	UPLOAD_STRATEGY            string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_UPLOAD_STRATEGY" envDefault:"singlepart"`
 	MULTIPART_PART_UPLOAD_SIZE int    `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_MULTIPART_PART_UPLOAD_SIZE" envDefault:"5242880"`
+}
+
+type AzureBlobStorageConfiguration struct {
+	CONNECTION_STRING  string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_CONNECTION_STRING"`
+	CONTAINER_NAME     string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_CONTAINER_NAME"`
+	BLOCK_SIZE         int64  `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_BLOCK_SIZE" envDefault:"8388608"`
+	UPLOAD_CONCURRENCY int    `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_UPLOAD_CONCURRENCY" envDefault:"5"`
 }
 
 //TODO: We should validate the configuration values so we can throw any unexpected configuration errors on startup..

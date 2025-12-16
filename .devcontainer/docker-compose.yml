@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   howlite-resources:
-    image: mcr.microsoft.com/devcontainers/go:1-1.24-bookworm
+    image: mcr.microsoft.com/devcontainers/go:1.25-bookworm
     volumes:
       - ./..:/workspaces/howlite-resources:cached
     command: sleep infinity

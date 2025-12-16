@@ -2,11 +2,10 @@ package filesystem
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/base64"
 	"errors"
 	"os"
 
+	"github.com/inx51/howlite-resources/configuration"
 	"github.com/inx51/howlite-resources/logger"
 	"github.com/inx51/howlite-resources/resource"
 	"github.com/inx51/howlite-resources/storage"
@@ -73,8 +72,8 @@ func (fileSystem *Storage) ResourceExists(ctx context.Context, resourceIdentifie
 	return true, nil
 }
 
-func NewStorage(storagePath string) storage.Storage {
-	return &Storage{StoragePath: storagePath}
+func NewStorage(configuration *configuration.FilesystemConfiguration) storage.Storage {
+	return &Storage{StoragePath: configuration.PATH}
 }
 
 func (fileSystem *Storage) GetName() string {
@@ -99,10 +98,5 @@ func (fileSystem *Storage) SaveResource(ctx context.Context, resource *resource.
 }
 
 func (fileSystem *Storage) resourcePath(resourceIdentifier *resource.ResourceIdentifier) string {
-	return fileSystem.StoragePath + "/" + identifierToStringVersion(resourceIdentifier) + ".bin"
-}
-
-func identifierToStringVersion(resourceIdentifier *resource.ResourceIdentifier) string {
-	var encBytes = md5.Sum([]byte(resourceIdentifier.Identifier()))
-	return base64.URLEncoding.EncodeToString(encBytes[:])
+	return fileSystem.StoragePath + "/" + resourceIdentifier.ToUniqueFilename()
 }

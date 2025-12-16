@@ -9,6 +9,7 @@ import (
 	"github.com/inx51/howlite-resources/http/server"
 	"github.com/inx51/howlite-resources/logger"
 	"github.com/inx51/howlite-resources/storage"
+	"github.com/inx51/howlite-resources/storage/azureblob"
 	"github.com/inx51/howlite-resources/storage/filesystem"
 )
 
@@ -26,7 +27,9 @@ func (container *Container) setupStorage(ctx context.Context, configuration conf
 	storageProviderName := configuration.NAME
 	switch storageProviderName {
 	case "filesystem":
-		container.storage = filesystem.NewStorage(configuration.STORAGE_PROVIDER_FILESYSTEM.PATH)
+		container.storage = filesystem.NewStorage(&configuration.STORAGE_PROVIDER_FILESYSTEM)
+	case "azureblob":
+		container.storage = azureblob.NewStorage(&configuration.STORAGE_PROVIDER_AZBLOB)
 	default:
 		panic("Unsupported storage provider: " + storageProviderName)
 	}
