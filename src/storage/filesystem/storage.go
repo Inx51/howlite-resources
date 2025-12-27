@@ -19,56 +19,81 @@ type Storage struct {
 
 func (fileSystem *Storage) GetResource(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (*resource.Resource, error) {
 	path := fileSystem.resourcePath(resourceIdentifier)
-	logger.Debug(ctx, "Trying to read resource from file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	logger.Debug(ctx, "trying to read file", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path)
+
 	osOpenCtx, span := tracer.StartDebugSpan(ctx, "os.open")
+	tracer.SetDebugAttributes(osOpenCtx, span,
+		attribute.String("file.path", path),
+		attribute.String("resource.identifier", resourceIdentifier.Identifier()),
+	)
 	reader, err := os.Open(path)
-	tracer.SetDebugAttributes(osOpenCtx, span, attribute.String("path", path))
+	if err != nil {
+		span.RecordError(err)
+	}
 	tracer.SafeEndSpan(span)
+
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			logger.Debug(ctx, "Could not find resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+			logger.Debug(ctx, "file not found", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path)
 			return nil, err
 		}
-		logger.Error(ctx, "Failed to read resource from file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+		logger.Error(ctx, "failed to open file", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path, "error", err)
 		return nil, err
 	}
+
 	resource, err := resource.LoadResource(resourceIdentifier, reader)
-	logger.Debug(ctx, "Read resource from file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	if err != nil {
+		logger.Error(ctx, "failed to load resource from file", "resource.identifier", resourceIdentifier.Identifier(), "error", err)
+		return nil, err
+	}
+	logger.Debug(ctx, "successfully read file", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path)
 	return resource, err
 }
 
 func (fileSystem *Storage) RemoveResource(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) error {
 	path := fileSystem.resourcePath(resourceIdentifier)
-	logger.Debug(ctx, "Trying to remove resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
-	logger.Debug(ctx, "Trying to read resource from file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	logger.Debug(ctx, "trying to remove file", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path)
+
 	osRemoveCtx, span := tracer.StartDebugSpan(ctx, "os.remove")
+	tracer.SetDebugAttributes(osRemoveCtx, span,
+		attribute.String("file.path", path),
+		attribute.String("resource.identifier", resourceIdentifier.Identifier()),
+	)
 	err := os.Remove(path)
-	tracer.SetDebugAttributes(osRemoveCtx, span, attribute.String("path", path))
-	tracer.SafeEndSpan(span)
+	defer tracer.SafeEndSpan(span)
+
 	if err != nil {
-		logger.Debug(ctx, "Removing resource file failed with unhandled error", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path, "error", err)
+		span.RecordError(err)
+		logger.Error(ctx, "failed to remove file", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path, "error", err)
 		return err
 	}
-	logger.Debug(ctx, "Successfully removed resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	logger.Debug(ctx, "successfully removed file", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path)
 	return nil
 }
 
 func (fileSystem *Storage) ResourceExists(ctx context.Context, resourceIdentifier *resource.ResourceIdentifier) (bool, error) {
 	path := fileSystem.resourcePath(resourceIdentifier)
-	logger.Debug(ctx, "Trying to validate if resource file exists", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+	logger.Debug(ctx, "checking if file exists", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path)
+
 	osStatCtx, span := tracer.StartDebugSpan(ctx, "os.stat")
+	defer tracer.SafeEndSpan(span)
+	tracer.SetDebugAttributes(osStatCtx, span,
+		attribute.String("file.path", path),
+		attribute.String("resource.identifier", resourceIdentifier.Identifier()),
+	)
 	_, err := os.Stat(path)
-	tracer.SetDebugAttributes(osStatCtx, span, attribute.String("path", path))
-	tracer.SafeEndSpan(span)
+
 	if err != nil {
+		span.RecordError(err)
 		if errors.Is(err, os.ErrNotExist) {
-			logger.Debug(ctx, "Could not find resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+			logger.Debug(ctx, "file not found", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path)
 			return false, nil
 		}
-		logger.Error(ctx, "Failed to find resource with unhandled error", "error", err)
+		logger.Error(ctx, "failed to stat file", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path, "error", err)
 		return false, err
 	}
-	logger.Debug(ctx, "Found resource file", "resourceIdentifier", resourceIdentifier.Identifier(), "file", path)
+
+	logger.Debug(ctx, "file exists", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path)
 	return true, nil
 }
 
@@ -82,16 +107,25 @@ func (fileSystem *Storage) GetName() string {
 
 func (fileSystem *Storage) SaveResource(ctx context.Context, resource *resource.Resource) error {
 	path := fileSystem.resourcePath(resource.Identifier)
-	logger.Debug(ctx, "Trying to create new writer for resource file", "resourceIdentifier", resource.Identifier.Identifier(), "file", path)
+	logger.Debug(ctx, "trying to create file", "resource.identifier", resource.Identifier.Identifier(), "file.path", path)
+
 	osCreateCtx, span := tracer.StartDebugSpan(ctx, "os.create")
+	tracer.SetDebugAttributes(osCreateCtx, span,
+		attribute.String("file.path", path),
+		attribute.String("resource.identifier", resource.Identifier.Identifier()),
+	)
 	writer, err := os.Create(path)
-	tracer.SetDebugAttributes(osCreateCtx, span, attribute.String("path", path))
-	tracer.SafeEndSpan(span)
 	if err != nil {
-		logger.Error(ctx, "Failed to create new writer for resource file", "resourceIdentifier", resource.Identifier.Identifier(), "path", path, "error", err)
+		span.RecordError(err)
+	}
+	tracer.SafeEndSpan(span)
+
+	if err != nil {
+		logger.Error(ctx, "failed to create file", "resource.identifier", resource.Identifier.Identifier(), "file.path", path, "error", err)
 		return err
 	}
-	logger.Debug(ctx, "Successfully created new writer for resource file", "resourceIdentifier", resource.Identifier.Identifier(), "file", path)
+
+	logger.Debug(ctx, "successfully created file", "resource.identifier", resource.Identifier.Identifier(), "file.path", path)
 	resource.Write(writer)
 	writer.Close()
 	return nil

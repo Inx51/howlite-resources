@@ -37,6 +37,7 @@ type StorageProvider struct {
 	STORAGE_PROVIDER_FILESYSTEM FilesystemConfiguration
 	STORAGE_PROVIDER_S3         S3Configuration
 	STORAGE_PROVIDER_AZBLOB     AzureBlobStorageConfiguration
+	STORAGE_PROVIDER_GCS        GCSConfiguration
 }
 
 type FilesystemConfiguration struct {
@@ -51,7 +52,7 @@ type S3Configuration struct {
 	REGION               string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_REGION"`
 	PART_UPLOAD_SIZE     int64  `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_PART_UPLOAD_SIZE" envDefault:"5242880"`
 	UPLOAD_CONCURRENCY   int    `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_UPLOAD_CONCURRENCY" envDefault:"5"`
-	DOWNLOAD_CONCURRENCY int    `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_UPLOAD_CONCURRENCY" envDefault:"5"`
+	DOWNLOAD_CONCURRENCY int    `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_DOWNLOAD_CONCURRENCY" envDefault:"5"`
 }
 
 type AzureBlobStorageConfiguration struct {
@@ -59,6 +60,15 @@ type AzureBlobStorageConfiguration struct {
 	CONTAINER_NAME     string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_CONTAINER_NAME"`
 	BLOCK_SIZE         int64  `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_BLOCK_SIZE" envDefault:"8388608"`
 	UPLOAD_CONCURRENCY int    `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_UPLOAD_CONCURRENCY" envDefault:"5"`
+}
+
+type GCSConfiguration struct {
+	BUCKET               string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_GCS_BUCKET"`
+	PROJECT_ID           string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_GCS_PROJECT_ID"`
+	CREDENTIALS_FILE     string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_GCS_CREDENTIALS_FILE"`
+	CHUNK_SIZE           int    `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_GCS_CHUNK_SIZE" envDefault:"8388608"`
+	UPLOAD_CONCURRENCY   int    `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_GCS_UPLOAD_CONCURRENCY" envDefault:"5"`
+	DOWNLOAD_CONCURRENCY int    `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_GCS_DOWNLOAD_CONCURRENCY" envDefault:"5"`
 }
 
 //TODO: We should validate the configuration values so we can throw any unexpected configuration errors on startup..
