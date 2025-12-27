@@ -27,6 +27,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./src/go.mod
+
+      - name: Generate code SBOM
+        run: |
+          go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
+          cd src
+          cyclonedx-gomod app -json -output ../code-sbom.json -main .
+
+      - name: Upload code SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-sbom-${{ github.sha }}
+          path: code-sbom.json
+          retention-days: 90
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -44,11 +62,8 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+            type=raw,value=dev
 
       - name: Build and push
         id: build-push
@@ -68,3 +83,17 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.build-push.outputs.digest }}
           push-to-registry: true
+
+      - name: Generate image SBOM with Syft
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-push.outputs.digest }}
+          format: cyclonedx-json
+          output-file: image-sbom.json
+
+      - name: Upload image SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-sbom-${{ github.sha }}
+          path: image-sbom.json
+          retention-days: 90
