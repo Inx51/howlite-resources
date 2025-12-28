@@ -72,6 +72,7 @@ jobs:
           context: ./src
           file: ./src/Dockerfile
           push: true
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -87,11 +88,9 @@ jobs:
       - name: Generate image SBOM with Syft
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-push.outputs.digest }}
+          image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
           format: cyclonedx-json
           output-file: image-sbom.json
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload image SBOM artifact
         uses: actions/upload-artifact@v4
