@@ -88,11 +88,12 @@ jobs:
         run: |
           IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
           docker pull ${IMAGE_LOWER}@${{ steps.build-push.outputs.digest }}
+          echo "IMAGE_REF=${IMAGE_LOWER}@${{ steps.build-push.outputs.digest }}" >> $GITHUB_ENV
 
       - name: Generate image SBOM with Syft
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-push.outputs.digest }}
+          image: ${{ env.IMAGE_REF }}
           format: cyclonedx-json
           output-file: image-sbom.json
 
