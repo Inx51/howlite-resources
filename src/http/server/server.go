@@ -24,6 +24,17 @@ type TimeoutConfigurations struct {
 	IdleTimeout  time.Duration
 }
 
+// NewServeMux builds and returns an http.ServeMux with all supplied handlers
+// registered. It is exposed so that acceptance tests can create an
+// httptest.Server without needing a real listener address or port.
+func NewServeMux(hs *[]handlers.Handler) *http.ServeMux {
+	mux := http.NewServeMux()
+	for _, h := range *hs {
+		registerHandler(mux, h)
+	}
+	return mux
+}
+
 func NewServer(
 	host string,
 	port int,
@@ -32,10 +43,7 @@ func NewServer(
 	readTimeout time.Duration,
 	idleTimeout time.Duration) *Server {
 
-	mux := http.NewServeMux()
-	for _, handler := range *handlers {
-		registerHandler(mux, handler)
-	}
+	mux := NewServeMux(handlers)
 
 	addr := host + ":" + strconv.Itoa(port)
 

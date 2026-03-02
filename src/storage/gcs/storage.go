@@ -129,6 +129,16 @@ func (gcsStorage *Storage) ResourceExists(ctx context.Context, resourceIdentifie
 	return true, nil
 }
 
+// NewStorageWithClient creates a Storage backed by an externally-managed GCS
+// client. Intended for testing against emulators where the caller owns the
+// client lifecycle and credential options.
+func NewStorageWithClient(config *configuration.GCSConfiguration, client *storage.Client) storageInterface.Storage {
+	return &Storage{
+		client:        client,
+		configuration: *config,
+	}
+}
+
 func NewStorage(config *configuration.GCSConfiguration) storageInterface.Storage {
 	ctx := context.Background()
 
