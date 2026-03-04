@@ -43,6 +43,7 @@ jobs:
           sbom: "code-sbom.json"
           fail-build: true
           severity-cutoff: high
+          output-format: table
 
       - name: Upload code SBOM artifact
         uses: actions/upload-artifact@v4
@@ -95,6 +96,7 @@ jobs:
           sbom: "image-sbom.json"
           fail-build: true
           severity-cutoff: high
+          output-format: table
 
       - name: Build and push
         id: build-push
