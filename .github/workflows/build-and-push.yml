@@ -4,14 +4,11 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: howlite-resource
+  IMAGE_NAME: inx51/howlite-resource
 
 jobs:
   build-and-push:
