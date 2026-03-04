@@ -11,6 +11,7 @@ import (
 	"github.com/inx51/howlite-resources/storage"
 	"github.com/inx51/howlite-resources/storage/azureblob"
 	"github.com/inx51/howlite-resources/storage/filesystem"
+	"github.com/inx51/howlite-resources/storage/s3"
 )
 
 type Container struct {
@@ -30,6 +31,8 @@ func (container *Container) setupStorage(ctx context.Context, configuration conf
 		container.storage = filesystem.NewStorage(&configuration.STORAGE_PROVIDER_FILESYSTEM)
 	case "azureblob":
 		container.storage = azureblob.NewStorage(&configuration.STORAGE_PROVIDER_AZBLOB)
+	case "s3":
+		container.storage = s3.NewStorage(ctx, &configuration.STORAGE_PROVIDER_S3)
 	default:
 		panic("Unsupported storage provider: " + storageProviderName)
 	}

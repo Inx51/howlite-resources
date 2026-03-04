@@ -127,8 +127,8 @@ func (s3Storage *Storage) ResourceExists(ctx context.Context, resourceIdentifier
 	return true, nil
 }
 
-func NewStorage(configuration *configuration.S3Configuration) storage.Storage {
-	cfg, err := buildConfig(context.Background(), configuration)
+func NewStorage(ctx context.Context, configuration *configuration.S3Configuration) storage.Storage {
+	cfg, err := buildConfig(ctx, configuration)
 	if err != nil {
 		panic(err)
 	}
@@ -159,7 +159,7 @@ func buildS3Options(configuration *configuration.S3Configuration) []func(*s3.Opt
 }
 
 func applyUsePathStyle(configuration *configuration.S3Configuration, options []func(*s3.Options)) []func(*s3.Options) {
-	if configuration.BASE_ENDPOINT != "" {
+	if configuration.ENDPOINT != "" {
 		options = append(options, func(o *s3.Options) {
 			o.UsePathStyle = true
 		})
@@ -177,8 +177,8 @@ func buildConfig(ctx context.Context, configuration *configuration.S3Configurati
 }
 
 func applyEndpoint(cfg *configuration.S3Configuration, options []func(*config.LoadOptions) error) []func(*config.LoadOptions) error {
-	if cfg.BASE_ENDPOINT != "" {
-		options = append(options, config.WithBaseEndpoint(cfg.BASE_ENDPOINT))
+	if cfg.ENDPOINT != "" {
+		options = append(options, config.WithBaseEndpoint(cfg.ENDPOINT))
 	}
 	return options
 }

@@ -70,7 +70,10 @@ func registerHandler(mux *http.ServeMux, handler handlers.Handler) {
 		ctx, span := tracer.StartInfoSpan(ctx, handler.Method()+" "+request.URL.Path)
 		defer tracer.SafeEndSpan(span)
 		logger.Debug(ctx, path, "method", request.Method, "path", request.URL.Path)
-		statusCode, _ := handler.Handle(ctx, request, response)
+		statusCode, err := handler.Handle(ctx, request, response)
+		if err != nil {
+			logger.Error(ctx, "handler returned error", "method", request.Method, "path", request.URL.Path, "status", statusCode, "error", err)
+		}
 
 		tracer.SetInfoAttributes(ctx,
 			span,

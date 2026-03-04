@@ -1,6 +1,6 @@
 .vscode
-/src/local.env
-main.exe
+src/.local.env
+src/howlite-resources.exe
 
 /src/main.exe
 /src/tmp

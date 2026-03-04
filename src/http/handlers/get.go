@@ -65,13 +65,13 @@ func (handler *GetHandler) Handle(
 	)
 	tracer.SafeEndSpan(span)
 
-	response.WriteHeaders(resource.Headers.Headers(), resp)
-
 	if err != nil {
 		statusCode = 500
 		resp.WriteHeader(statusCode)
 		return statusCode, err
 	}
+
+	response.WriteHeaders(resource.Headers.Headers(), resp)
 
 	meter.ArithmeticInt64Counter(ctx, "resources_fetched_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
 

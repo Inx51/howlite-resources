@@ -54,8 +54,13 @@ func (handler *ExistsHandler) Handle(
 			span,
 			attribute.String("resource_identifier", resourceIdentifier.Identifier()),
 		)
-		resource, _ := storage.GetResource(grCtx, resourceIdentifier)
+		resource, err := storage.GetResource(grCtx, resourceIdentifier)
 		span.End()
+		if err != nil {
+			statusCode = http.StatusInternalServerError
+			resp.WriteHeader(statusCode)
+			return statusCode, err
+		}
 		defer (*resource.Body).Close()
 
 		response.WriteHeaders(resource.Headers.Headers(), resp)
@@ -64,7 +69,7 @@ func (handler *ExistsHandler) Handle(
 		resp.WriteHeader(statusCode)
 	} else {
 		logger.Debug(ctx, "Failed to find resource", "resourceIdentifier", resourceIdentifier.Identifier())
-		statusCode = http.StatusNoContent
+		statusCode = http.StatusNotFound
 		resp.WriteHeader(statusCode)
 	}
 	return statusCode, nil
