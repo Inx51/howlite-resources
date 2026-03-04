@@ -3,16 +3,15 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - main
-      - develop
+      - master
   pull_request:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: howlite-resource
 
 jobs:
   build-and-push:
@@ -37,6 +36,13 @@ jobs:
           go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
           cd src
           cyclonedx-gomod app -json -output ../code-sbom.json -main .
+
+      - name: Scan code SBOM for vulnerabilities
+        uses: anchore/scan-action@v3
+        with:
+          image: "sbom:code-sbom.json"
+          fail-build: true
+          severity-cutoff: high
 
       - name: Upload code SBOM artifact
         uses: actions/upload-artifact@v4
@@ -65,6 +71,31 @@ jobs:
             type=sha
             type=raw,value=dev
 
+      - name: Build image for scanning
+        uses: docker/build-push-action@v6
+        with:
+          context: ./src
+          file: ./src/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate image SBOM with Syft
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:scan
+          format: cyclonedx-json
+          output-file: image-sbom.json
+
+      - name: Scan image SBOM for vulnerabilities
+        uses: anchore/scan-action@v3
+        with:
+          image: "sbom:image-sbom.json"
+          fail-build: true
+          severity-cutoff: high
+
       - name: Build and push
         id: build-push
         uses: docker/build-push-action@v6
@@ -75,7 +106,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
@@ -83,19 +113,6 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.build-push.outputs.digest }}
           push-to-registry: true
-
-      - name: Pull image for SBOM scanning
-        run: |
-          IMAGE_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
-          docker pull ${IMAGE_LOWER}@${{ steps.build-push.outputs.digest }}
-          echo "IMAGE_REF=${IMAGE_LOWER}@${{ steps.build-push.outputs.digest }}" >> $GITHUB_ENV
-
-      - name: Generate image SBOM with Syft
-        uses: anchore/sbom-action@v0
-        with:
-          image: ${{ env.IMAGE_REF }}
-          format: cyclonedx-json
-          output-file: image-sbom.json
 
       - name: Upload image SBOM artifact
         uses: actions/upload-artifact@v4
