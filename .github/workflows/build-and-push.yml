@@ -28,6 +28,15 @@ jobs:
         with:
           go-version-file: ./src/go.mod
 
+      - name: Check dependency licenses
+        run: |
+          go install github.com/google/go-licenses@latest
+          cd src
+          echo "### Dependency licenses ###"
+          go-licenses report ./... | column -t -s,
+          echo "### Checking for disallowed licenses ###"
+          go-licenses check ./... --allowed_licenses=MIT,Apache-2.0
+
       - name: Generate code SBOM
         run: |
           go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
