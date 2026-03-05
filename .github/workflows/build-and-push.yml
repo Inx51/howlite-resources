@@ -33,9 +33,9 @@ jobs:
           go install github.com/google/go-licenses@latest
           cd src
           echo "### Dependency licenses ###"
-          go-licenses report ./... | column -t -s,
+          go-licenses report ./... --ignore github.com/inx51/howlite-resources | column -t -s,
           echo "### Checking for disallowed licenses ###"
-          go-licenses check ./... --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause
+          go-licenses check ./... --ignore github.com/inx51/howlite-resources --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause
 
       - name: Generate code SBOM
         run: |
