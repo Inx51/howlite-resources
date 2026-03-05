@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: inx51/howlite-resource
+  IMAGE_NAME: inx51/howlite-resources
 
 jobs:
   build-and-push:
