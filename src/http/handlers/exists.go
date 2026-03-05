@@ -54,13 +54,8 @@ func (handler *ExistsHandler) Handle(
 			span,
 			attribute.String("resource_identifier", resourceIdentifier.Identifier()),
 		)
-		resource, err := storage.GetResource(grCtx, resourceIdentifier)
-		span.End()
-		if err != nil {
-			statusCode = http.StatusInternalServerError
-			resp.WriteHeader(statusCode)
-			return statusCode, err
-		}
+		resource, _ := storage.GetResource(grCtx, resourceIdentifier)
+		tracer.SafeEndSpan(span)
 		defer (*resource.Body).Close()
 
 		response.WriteHeaders(resource.Headers.Headers(), resp)

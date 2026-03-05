@@ -65,6 +65,16 @@ func SafeEndSpan(span trace.Span) {
 	}
 }
 
+func SafeRecordError(span trace.Span, err error) {
+	if !enabled {
+		return
+	}
+
+	if span != nil {
+		span.RecordError(err)
+	}
+}
+
 func setLevel(traceLevel string) int {
 	if traceLevel == "" {
 		traceLevel = "info"

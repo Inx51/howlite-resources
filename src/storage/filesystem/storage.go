@@ -28,7 +28,7 @@ func (fileSystem *Storage) GetResource(ctx context.Context, resourceIdentifier *
 	)
 	reader, err := os.Open(path)
 	if err != nil {
-		span.RecordError(err)
+		tracer.SafeRecordError(span, err)
 	}
 	tracer.SafeEndSpan(span)
 
@@ -63,7 +63,7 @@ func (fileSystem *Storage) RemoveResource(ctx context.Context, resourceIdentifie
 	defer tracer.SafeEndSpan(span)
 
 	if err != nil {
-		span.RecordError(err)
+		tracer.SafeRecordError(span, err)
 		logger.Error(ctx, "failed to remove file", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path, "error", err)
 		return err
 	}
@@ -84,7 +84,7 @@ func (fileSystem *Storage) ResourceExists(ctx context.Context, resourceIdentifie
 	_, err := os.Stat(path)
 
 	if err != nil {
-		span.RecordError(err)
+		tracer.SafeRecordError(span, err)
 		if errors.Is(err, os.ErrNotExist) {
 			logger.Debug(ctx, "file not found", "resource.identifier", resourceIdentifier.Identifier(), "file.path", path)
 			return false, nil
@@ -116,7 +116,7 @@ func (fileSystem *Storage) SaveResource(ctx context.Context, resource *resource.
 	)
 	writer, err := os.Create(path)
 	if err != nil {
-		span.RecordError(err)
+		tracer.SafeRecordError(span, err)
 	}
 	tracer.SafeEndSpan(span)
 
