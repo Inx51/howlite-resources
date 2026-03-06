@@ -15,15 +15,15 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/azure v0.40.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.40.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1
-	go.opentelemetry.io/contrib/bridges/otelslog v0.16.0
+	go.opentelemetry.io/contrib/bridges/otelslog v0.17.0
 	go.opentelemetry.io/contrib/exporters/autoexport v0.66.0
-	go.opentelemetry.io/otel v1.41.0
-	go.opentelemetry.io/otel/log v0.17.0
-	go.opentelemetry.io/otel/metric v1.41.0
+	go.opentelemetry.io/otel v1.42.0
+	go.opentelemetry.io/otel/log v0.18.0
+	go.opentelemetry.io/otel/metric v1.42.0
 	go.opentelemetry.io/otel/sdk v1.41.0
 	go.opentelemetry.io/otel/sdk/log v0.17.0
 	go.opentelemetry.io/otel/sdk/metric v1.41.0
-	go.opentelemetry.io/otel/trace v1.41.0
+	go.opentelemetry.io/otel/trace v1.42.0
 )
 
 require (
