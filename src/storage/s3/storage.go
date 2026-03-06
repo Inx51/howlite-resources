@@ -40,9 +40,7 @@ func (s3Storage *Storage) GetResource(ctx context.Context, resourceIdentifier *r
 		Bucket: aws.String(s3Storage.configuration.BUCKET),
 		Key:    aws.String(objectKey),
 	})
-	if err != nil {
-		span.RecordError(err)
-	}
+	tracer.SafeRecordError(span, err)
 	tracer.SafeEndSpan(span)
 
 	if err != nil {
@@ -80,9 +78,7 @@ func (s3Storage *Storage) RemoveResource(ctx context.Context, resourceIdentifier
 		Bucket: aws.String(s3Storage.configuration.BUCKET),
 		Key:    aws.String(objectKey),
 	})
-	if err != nil {
-		span.RecordError(err)
-	}
+	tracer.SafeRecordError(span, err)
 	tracer.SafeEndSpan(span)
 
 	if err != nil {
@@ -108,9 +104,7 @@ func (s3Storage *Storage) ResourceExists(ctx context.Context, resourceIdentifier
 		Bucket: aws.String(s3Storage.configuration.BUCKET),
 		Key:    aws.String(objectKey),
 	})
-	if err != nil {
-		span.RecordError(err)
-	}
+	tracer.SafeRecordError(span, err)
 	tracer.SafeEndSpan(span)
 
 	if err != nil {
@@ -221,9 +215,7 @@ func (s3Storage *Storage) SaveResource(ctx context.Context, resource *resource.R
 		Key:    aws.String(objectKey),
 		Body:   reader,
 	})
-	if err != nil {
-		span.RecordError(err)
-	}
+	tracer.SafeRecordError(span, err)
 	tracer.SafeEndSpan(span)
 
 	if err != nil {

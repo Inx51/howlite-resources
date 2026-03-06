@@ -32,9 +32,7 @@ func (azureBlobStorage *Storage) GetResource(ctx context.Context, resourceIdenti
 		attribute.String("resource.identifier", resourceIdentifier.Identifier()),
 	)
 	blobStream, err := blobClient.DownloadStream(blobClientCtx, nil)
-	if err != nil {
-		span.RecordError(err)
-	}
+	tracer.SafeRecordError(span, err)
 	tracer.SafeEndSpan(span)
 
 	if err != nil {
@@ -67,9 +65,7 @@ func (azureBlobStorage *Storage) RemoveResource(ctx context.Context, resourceIde
 		attribute.String("resource.identifier", resourceIdentifier.Identifier()),
 	)
 	_, err := blobClient.Delete(blobClientCtx, nil)
-	if err != nil {
-		span.RecordError(err)
-	}
+	tracer.SafeRecordError(span, err)
 	tracer.SafeEndSpan(span)
 
 	if err != nil {
@@ -91,9 +87,7 @@ func (azureBlobStorage *Storage) ResourceExists(ctx context.Context, resourceIde
 		attribute.String("resource.identifier", resourceIdentifier.Identifier()),
 	)
 	_, err := blobClient.GetProperties(blobClientCtx, nil)
-	if err != nil {
-		span.RecordError(err)
-	}
+	tracer.SafeRecordError(span, err)
 	tracer.SafeEndSpan(span)
 
 	if err != nil {
@@ -145,7 +139,7 @@ func (azureBlobStorage *Storage) SaveResource(ctx context.Context, resource *res
 		Concurrency: azureBlobStorage.configuration.UPLOAD_CONCURRENCY,
 	})
 	if err != nil {
-		span.RecordError(err)
+		tracer.SafeRecordError(span, err)
 	}
 	tracer.SafeEndSpan(span)
 
