@@ -28,6 +28,11 @@ jobs:
         with:
           go-version-file: ./src/go.mod
 
+      - name: Run acceptance tests
+        run: |
+          cd src
+          go test ./storage/... -run TestAcceptance -v -timeout 120s
+
       - name: Check dependency licenses
         run: |
           go install github.com/google/go-licenses@latest
