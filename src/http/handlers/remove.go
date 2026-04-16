@@ -3,7 +3,10 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"time"
 
+	"github.com/inx51/howlite-resources/event"
+	"github.com/inx51/howlite-resources/event/types"
 	"github.com/inx51/howlite-resources/logger"
 	"github.com/inx51/howlite-resources/meter"
 	"github.com/inx51/howlite-resources/resource"
@@ -15,6 +18,7 @@ import (
 
 type RemoveHandler struct {
 	storage *storage.Storage
+	outbox  *event.Outbox
 }
 
 func (handler *RemoveHandler) Method() string {
@@ -70,13 +74,21 @@ func (handler *RemoveHandler) Handle(
 	meter.ArithmeticInt64Counter(ctx, "resources_removed_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
 	meter.ArithmeticInt64Counter(ctx, "resources_overall", -1)
 
+	handler.outbox.Enqueue(
+		ctx,
+		types.ResourceRemoved{
+			RemovedUtc:       time.Now(),
+			ResourceIdentity: resourceIdentifier.Identifier(),
+		})
+
 	resp.WriteHeader(statusCode)
 	logger.Info(ctx, "Removed resource", "resourceIdentifier", resourceIdentifier.Identifier())
 	return statusCode, nil
 }
 
-func NewRemoveHandler(storage *storage.Storage) Handler {
+func NewRemoveHandler(storage *storage.Storage, outbox *event.Outbox) Handler {
 	return &RemoveHandler{
 		storage: storage,
+		outbox:  outbox,
 	}
 }

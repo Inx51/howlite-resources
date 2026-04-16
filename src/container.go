@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/inx51/howlite-resources/configuration"
+	"github.com/inx51/howlite-resources/event"
 	"github.com/inx51/howlite-resources/http/handlers"
 	"github.com/inx51/howlite-resources/http/server"
 	"github.com/inx51/howlite-resources/logger"
@@ -15,9 +16,11 @@ import (
 )
 
 type Container struct {
-	storage  storage.Storage
-	handlers *[]handlers.Handler
-	server   *server.Server
+	storage     storage.Storage
+	outbox      *event.Outbox
+	handlers    *[]handlers.Handler
+	server      *server.Server
+	eventWorker event.Worker
 }
 
 func NewContainer() *Container {
@@ -42,12 +45,19 @@ func (container *Container) setupStorage(ctx context.Context, configuration conf
 func (container *Container) setupHandlers() {
 	container.handlers = &[]handlers.Handler{
 		handlers.NewGetHandler(&container.storage),
-		handlers.NewCreateHandler(&container.storage),
-		handlers.NewReplaceHandler(&container.storage),
-		handlers.NewRemoveHandler(&container.storage),
+		handlers.NewCreateHandler(&container.storage, container.outbox),
+		handlers.NewReplaceHandler(&container.storage, container.outbox),
+		handlers.NewRemoveHandler(&container.storage, container.outbox),
 		handlers.NewExistsHandler(&container.storage),
 		handlers.NewSysProbeHandler(),
 	}
+}
+
+func (container *Container) setupOutboxWorker(ctx context.Context, configuration configuration.EventPublisher) {
+	outbox := event.NewOutbox()
+	container.outbox = &outbox
+	publisher := event.NewPublisher(ctx, configuration.EVENT_PUBLISHER_ENDPOINT)
+	container.eventWorker = event.NewWorker(ctx, &outbox, &publisher)
 }
 
 func (container *Container) setupHttpServer(configuration configuration.HttpServer) {

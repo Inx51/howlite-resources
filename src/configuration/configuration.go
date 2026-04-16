@@ -10,6 +10,7 @@ type Configuration struct {
 	STORAGE_PROVIDER StorageProvider
 	OTEL             OtelConfiguration
 	TRACING          Tracing
+	EVENT_PUBLISHER  EventPublisher
 }
 
 type Tracing struct {
@@ -59,6 +60,10 @@ type AzureBlobStorageConfiguration struct {
 	CONTAINER_NAME     string `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_CONTAINER_NAME"`
 	BLOCK_SIZE         int64  `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_BLOCK_SIZE" envDefault:"8388608"`
 	UPLOAD_CONCURRENCY int    `env:"HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_UPLOAD_CONCURRENCY" envDefault:"5"`
+}
+
+type EventPublisher struct {
+	EVENT_PUBLISHER_ENDPOINT string `env:"HOWLITE_RESOURCE_EVENT_PUBLISHER_ENDPOINT"`
 }
 
 //TODO: We should validate the configuration values so we can throw any unexpected configuration errors on startup..

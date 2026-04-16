@@ -31,9 +31,9 @@ func (app *Application) ConfigureConfigurations(ctx context.Context) *configurat
 func (app *Application) ConfigureContainer(ctx context.Context) {
 	container := NewContainer()
 	container.setupStorage(ctx, app.configuration.STORAGE_PROVIDER)
+	container.setupOutboxWorker(ctx, app.configuration.EVENT_PUBLISHER)
 	container.setupHandlers()
 	container.setupHttpServer(app.configuration.HTTP_SERVER)
-
 	app.container = container
 }
 

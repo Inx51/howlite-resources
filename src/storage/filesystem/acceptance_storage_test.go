@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/inx51/howlite-resources/configuration"
+	"github.com/inx51/howlite-resources/event"
 	"github.com/inx51/howlite-resources/http/handlers"
 	httpserver "github.com/inx51/howlite-resources/http/server"
 	"github.com/stretchr/testify/require"
@@ -18,11 +19,12 @@ func newTestServer(t *testing.T) (*httptest.Server, *http.Client) {
 	dir := t.TempDir()
 
 	store := NewStorage(&configuration.FilesystemConfiguration{PATH: dir})
+	eventPublisher := event.NewPublisher()
 	hs := &[]handlers.Handler{
 		handlers.NewGetHandler(&store),
-		handlers.NewCreateHandler(&store),
-		handlers.NewReplaceHandler(&store),
-		handlers.NewRemoveHandler(&store),
+		handlers.NewCreateHandler(&store, &eventPublisher),
+		handlers.NewReplaceHandler(&store, &eventPublisher),
+		handlers.NewRemoveHandler(&store, &eventPublisher),
 		handlers.NewExistsHandler(&store),
 	}
 

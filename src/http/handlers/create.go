@@ -3,7 +3,10 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"time"
 
+	"github.com/inx51/howlite-resources/event"
+	"github.com/inx51/howlite-resources/event/types"
 	"github.com/inx51/howlite-resources/http/uri"
 	"github.com/inx51/howlite-resources/logger"
 	"github.com/inx51/howlite-resources/meter"
@@ -16,6 +19,7 @@ import (
 
 type CreateHandler struct {
 	storage *storage.Storage
+	outbox  *event.Outbox
 }
 
 func (handler *CreateHandler) Method() string {
@@ -77,6 +81,13 @@ func (handler *CreateHandler) Handle(
 	meter.ArithmeticInt64Counter(ctx, "resources_created_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
 	meter.ArithmeticInt64Counter(ctx, "resources_overall", 1)
 
+	handler.outbox.Enqueue(
+		ctx,
+		types.ResourceCreated{
+			CreatedUtc:       time.Now(),
+			ResourceIdentity: resourceIdentifier.Identifier(),
+		})
+
 	location := uri.AbsoluteUri(req)
 	resp.Header().Add("Location", location)
 	resp.WriteHeader(statusCode)
@@ -84,8 +95,18 @@ func (handler *CreateHandler) Handle(
 	return statusCode, nil
 }
 
-func NewCreateHandler(storage *storage.Storage) Handler {
+// func (handler *CreateHandler) publishEvent(ctx context.Context, eventType string, resourceIdentifier string) {
+// 	data, err := json.Marshal(map[string]string{"event": eventType, "resource_identifier": resourceIdentifier})
+// 	if err != nil {
+// 		logger.Error(ctx, "Failed to marshal event", "error", err)
+// 		return
+// 	}
+// 	handler.outbox.Enqueue(ctx, data)
+// }
+
+func NewCreateHandler(storage *storage.Storage, outbox *event.Outbox) Handler {
 	return &CreateHandler{
 		storage: storage,
+		outbox:  outbox,
 	}
 }
