@@ -39,8 +39,10 @@ func (app *Application) ConfigureContainer(ctx context.Context) {
 
 func (app *Application) Run(ctx context.Context) {
 	app.container.server.Start(ctx)
+	app.container.eventWorker.Start(ctx)
 }
 
 func (app *Application) Shutdown(ctx context.Context) {
 	app.container.server.Shutdown(ctx)
+	app.container.eventWorker.Stop(ctx)
 }
