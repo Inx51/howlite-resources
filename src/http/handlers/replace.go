@@ -19,7 +19,7 @@ import (
 
 type ReplaceHandler struct {
 	storage *storage.Storage
-	outbox  *event.Outbox
+	bus     *event.Bus
 }
 
 func (handler *ReplaceHandler) Method() string {
@@ -79,7 +79,7 @@ func (handler *ReplaceHandler) Handle(
 	location := uri.AbsoluteUri(req)
 	resp.Header().Add("Location", location)
 	if !resourceExists {
-		handler.outbox.Enqueue(
+		handler.bus.Publish(
 			ctx,
 			types.ResourceCreated{
 				CreatedUtc:       time.Now(),
@@ -91,7 +91,7 @@ func (handler *ReplaceHandler) Handle(
 		statusCode = http.StatusCreated
 		resp.WriteHeader(statusCode)
 	} else {
-		handler.outbox.Enqueue(
+		handler.bus.Publish(
 			ctx,
 			types.ResourceReplaced{
 				ReplacedUtc:      time.Now(),
@@ -104,9 +104,9 @@ func (handler *ReplaceHandler) Handle(
 	return statusCode, nil
 }
 
-func NewReplaceHandler(storage *storage.Storage, outbox *event.Outbox) Handler {
+func NewReplaceHandler(storage *storage.Storage, bus *event.Bus) Handler {
 	return &ReplaceHandler{
 		storage: storage,
-		outbox:  outbox,
+		bus:     bus,
 	}
 }

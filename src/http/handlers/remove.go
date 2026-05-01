@@ -18,7 +18,7 @@ import (
 
 type RemoveHandler struct {
 	storage *storage.Storage
-	outbox  *event.Outbox
+	bus     *event.Bus
 }
 
 func (handler *RemoveHandler) Method() string {
@@ -74,7 +74,7 @@ func (handler *RemoveHandler) Handle(
 	meter.ArithmeticInt64Counter(ctx, "resources_removed_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
 	meter.ArithmeticInt64Counter(ctx, "resources_overall", -1)
 
-	handler.outbox.Enqueue(
+	handler.bus.Publish(
 		ctx,
 		types.ResourceRemoved{
 			RemovedUtc:       time.Now(),
@@ -86,9 +86,9 @@ func (handler *RemoveHandler) Handle(
 	return statusCode, nil
 }
 
-func NewRemoveHandler(storage *storage.Storage, outbox *event.Outbox) Handler {
+func NewRemoveHandler(storage *storage.Storage, bus *event.Bus) Handler {
 	return &RemoveHandler{
 		storage: storage,
-		outbox:  outbox,
+		bus:     bus,
 	}
 }

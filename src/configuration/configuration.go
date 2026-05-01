@@ -64,6 +64,7 @@ type AzureBlobStorageConfiguration struct {
 
 type EventPublisher struct {
 	EVENT_PUBLISHER_ENDPOINT string `env:"HOWLITE_RESOURCE_EVENT_PUBLISHER_ENDPOINT"`
+	OUTBOX_SQLITE_PATH       string `env:"HOWLITE_RESOURCE_EVENT_OUTBOX_SQLITE_PATH"`
 }
 
 //TODO: We should validate the configuration values so we can throw any unexpected configuration errors on startup..

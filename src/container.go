@@ -16,11 +16,11 @@ import (
 )
 
 type Container struct {
-	storage     storage.Storage
-	outbox      *event.Outbox
-	handlers    *[]handlers.Handler
-	server      *server.Server
-	eventWorker event.Worker
+	storage      storage.Storage
+	handlers     *[]handlers.Handler
+	server       *server.Server
+	bus          *event.Bus
+	outboxWorker *event.OutboxWorker
 }
 
 func NewContainer() *Container {
@@ -45,19 +45,38 @@ func (container *Container) setupStorage(ctx context.Context, configuration conf
 func (container *Container) setupHandlers() {
 	container.handlers = &[]handlers.Handler{
 		handlers.NewGetHandler(&container.storage),
-		handlers.NewCreateHandler(&container.storage, container.outbox),
-		handlers.NewReplaceHandler(&container.storage, container.outbox),
-		handlers.NewRemoveHandler(&container.storage, container.outbox),
+		handlers.NewCreateHandler(&container.storage, container.bus),
+		handlers.NewReplaceHandler(&container.storage, container.bus),
+		handlers.NewRemoveHandler(&container.storage, container.bus),
 		handlers.NewExistsHandler(&container.storage),
 		handlers.NewSysProbeHandler(),
 	}
 }
 
-func (container *Container) setupOutboxWorker(ctx context.Context, configuration configuration.EventPublisher) {
-	outbox := event.NewOutbox()
-	container.outbox = &outbox
-	publisher := event.NewPublisher(ctx, configuration.EVENT_PUBLISHER_ENDPOINT)
-	container.eventWorker = event.NewWorker(ctx, &outbox, &publisher)
+func (container *Container) setupEventPublisher(ctx context.Context, configuration configuration.EventPublisher) {
+
+	var publisherPtr *event.Publisher
+	var outboxPtr *event.Outbox
+
+	if configuration.EVENT_PUBLISHER_ENDPOINT != "" {
+		publisher := event.NewPublisher(ctx, configuration.EVENT_PUBLISHER_ENDPOINT)
+		publisherPtr = &publisher
+	} else {
+		logger.Info(ctx, "No event publisher endpoint specified, events will not be published")
+		return
+	}
+
+	if configuration.OUTBOX_SQLITE_PATH != "" {
+		outbox := event.NewOutbox(ctx, configuration.OUTBOX_SQLITE_PATH)
+		outboxPtr = &outbox
+
+		outboxWorker := event.NewOutboxWorker(ctx, outboxPtr, publisherPtr)
+		container.outboxWorker = &outboxWorker
+	} else {
+		logger.Info(ctx, "No outbox path specified, published events will not be persisted")
+	}
+
+	container.bus = event.NewBus(publisherPtr, outboxPtr) // One or both can be nil
 }
 
 func (container *Container) setupHttpServer(configuration configuration.HttpServer) {

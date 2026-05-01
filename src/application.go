@@ -31,7 +31,7 @@ func (app *Application) ConfigureConfigurations(ctx context.Context) *configurat
 func (app *Application) ConfigureContainer(ctx context.Context) {
 	container := NewContainer()
 	container.setupStorage(ctx, app.configuration.STORAGE_PROVIDER)
-	container.setupOutboxWorker(ctx, app.configuration.EVENT_PUBLISHER)
+	container.setupEventPublisher(ctx, app.configuration.EVENT_PUBLISHER)
 	container.setupHandlers()
 	container.setupHttpServer(app.configuration.HTTP_SERVER)
 	app.container = container
@@ -39,10 +39,14 @@ func (app *Application) ConfigureContainer(ctx context.Context) {
 
 func (app *Application) Run(ctx context.Context) {
 	app.container.server.Start(ctx)
-	go app.container.eventWorker.Start(ctx)
+	if app.container.outboxWorker != nil {
+		go app.container.outboxWorker.Start(ctx)
+	}
 }
 
 func (app *Application) Shutdown(ctx context.Context) {
 	app.container.server.Shutdown(ctx)
-	app.container.eventWorker.Stop(ctx)
+	if app.container.outboxWorker != nil {
+		app.container.outboxWorker.Stop(ctx)
+	}
 }

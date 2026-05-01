@@ -41,7 +41,7 @@ func (publisher *Publisher) Publish(ctx context.Context, event []byte) {
 		logger.Error(ctx, "Failed to send event frame via zero mq", "error", err)
 		return
 	}
-	logger.Info(ctx, "Event frame sent via zero mq")
+	logger.Info(ctx, "Event published")
 }
 
 func (publisher *Publisher) Stop() {

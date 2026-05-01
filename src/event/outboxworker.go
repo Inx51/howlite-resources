@@ -7,21 +7,21 @@ import (
 	"github.com/inx51/howlite-resources/logger"
 )
 
-type Worker struct {
+type OutboxWorker struct {
 	outbox    *Outbox
 	publisher *Publisher
 	ticker    *time.Ticker
 }
 
-func NewWorker(ctx context.Context, outbox *Outbox, publisher *Publisher) Worker {
-	return Worker{
+func NewOutboxWorker(ctx context.Context, outbox *Outbox, publisher *Publisher) OutboxWorker {
+	return OutboxWorker{
 		outbox:    outbox,
 		publisher: publisher,
 		ticker:    time.NewTicker(10 * time.Millisecond),
 	}
 }
 
-func (worker *Worker) Start(ctx context.Context) {
+func (worker *OutboxWorker) Start(ctx context.Context) {
 	if worker.ticker == nil {
 		logger.Info(ctx, "Background worker for outbox did not start, missing endpoint configuration for publisher")
 		return
@@ -45,7 +45,8 @@ func (worker *Worker) Start(ctx context.Context) {
 	}
 }
 
-func (worker *Worker) Stop(ctx context.Context) {
+func (worker *OutboxWorker) Stop(ctx context.Context) {
+	worker.outbox.Close(ctx)
 	worker.ticker.Stop()
 
 }

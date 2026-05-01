@@ -19,7 +19,7 @@ import (
 
 type CreateHandler struct {
 	storage *storage.Storage
-	outbox  *event.Outbox
+	bus     *event.Bus
 }
 
 func (handler *CreateHandler) Method() string {
@@ -81,7 +81,7 @@ func (handler *CreateHandler) Handle(
 	meter.ArithmeticInt64Counter(ctx, "resources_created_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
 	meter.ArithmeticInt64Counter(ctx, "resources_overall", 1)
 
-	handler.outbox.Enqueue(
+	handler.bus.Publish(
 		ctx,
 		types.ResourceCreated{
 			CreatedUtc:       time.Now(),
@@ -95,18 +95,9 @@ func (handler *CreateHandler) Handle(
 	return statusCode, nil
 }
 
-// func (handler *CreateHandler) publishEvent(ctx context.Context, eventType string, resourceIdentifier string) {
-// 	data, err := json.Marshal(map[string]string{"event": eventType, "resource_identifier": resourceIdentifier})
-// 	if err != nil {
-// 		logger.Error(ctx, "Failed to marshal event", "error", err)
-// 		return
-// 	}
-// 	handler.outbox.Enqueue(ctx, data)
-// }
-
-func NewCreateHandler(storage *storage.Storage, outbox *event.Outbox) Handler {
+func NewCreateHandler(storage *storage.Storage, bus *event.Bus) Handler {
 	return &CreateHandler{
 		storage: storage,
-		outbox:  outbox,
+		bus:     bus,
 	}
 }
