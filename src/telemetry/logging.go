@@ -48,6 +48,10 @@ func SetupLogging(ctx context.Context) {
 }
 
 func ShutdownLogging(ctx context.Context) {
+	if loggerProvider == nil {
+		return
+	}
+
 	if err := loggerProvider.Shutdown(ctx); err != nil {
 		logger.Error(ctx, "Failed to shutdown logger provider for OpenTelemetry", "error", err)
 		return

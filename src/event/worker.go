@@ -27,15 +27,21 @@ func (worker *Worker) Start(ctx context.Context) {
 		return
 	}
 
-	for range worker.ticker.C {
-		message := worker.outbox.Dequeue(ctx)
-		if message == nil {
-			logger.Debug(ctx, "No new messages in outbox")
-			continue
-		}
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Info(ctx, "Outbox worker stopped")
+			return
+		case <-worker.ticker.C:
+			message := worker.outbox.Dequeue(ctx)
+			if message == nil {
+				logger.Debug(ctx, "No new messages in outbox")
+				continue
+			}
 
-		worker.publisher.Publish(ctx, message)
-		logger.Info(ctx, "Published event from outbox")
+			worker.publisher.Publish(ctx, message)
+			logger.Info(ctx, "Published event from outbox")
+		}
 	}
 }
 
