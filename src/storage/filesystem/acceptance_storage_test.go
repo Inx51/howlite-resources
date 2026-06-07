@@ -25,6 +25,7 @@ func newTestServer(t *testing.T) (*httptest.Server, *http.Client) {
 		handlers.NewCreateHandler(&store, bus),
 		handlers.NewReplaceHandler(&store, bus),
 		handlers.NewRemoveHandler(&store, bus),
+		handlers.NewExistsHandler(&store),
 	}
 
 	ts := httptest.NewServer(httpserver.NewServeMux(hs))
