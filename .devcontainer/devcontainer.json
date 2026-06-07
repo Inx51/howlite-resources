@@ -4,8 +4,6 @@
 	"name": "Go",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/go:2-1.26-bookworm",
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [8080],
 	// Use 'postStartCommand' to run a command each time the container starts.
@@ -15,5 +13,17 @@
 	// Configure tool-specific properties.
 	// "customizations": {},
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+	// "remoteUser": "root",
+	// Mount the host's Podman socket into the devcontainer.
+	// The source path uses uid 1000 (rootless). For rootful Podman use /run/podman/podman.sock.
+	"mounts": [
+		"source=/run/user/1000/podman/podman.sock,target=/run/podman/podman.sock,type=bind"
+	],
+	"containerEnv": {
+		// Point testcontainers at the host Podman socket.
+		"DOCKER_HOST": "unix:///run/podman/podman.sock",
+		// Containers started via the host socket have ports bound on the host, not localhost
+		// inside this devcontainer. This tells testcontainers to use the Podman bridge address.
+		"TESTCONTAINERS_HOST_OVERRIDE": "host.containers.internal"
+	}
 }

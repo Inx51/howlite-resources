@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -21,6 +22,11 @@ import (
 
 const testContainer = "test-container"
 
+func TestMain(m *testing.M) {
+	os.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+	os.Exit(m.Run())
+}
+
 func newTestServer(t *testing.T) (*httptest.Server, *http.Client) {
 	t.Helper()
 	ctx := context.Background()
@@ -29,7 +35,7 @@ func newTestServer(t *testing.T) (*httptest.Server, *http.Client) {
 		ctx,
 		"mcr.microsoft.com/azure-storage/azurite:3.28.0",
 		tcazurite.WithEnabledServices(tcazurite.BlobService),
-		testcontainers.WithCmdArgs("--skipApiVersionCheck"),
+		testcontainers.WithCmdArgs("--skipApiVersionCheck", "--disableProductStyleUrl"),
 	)
 	require.NoError(t, err)
 	testcontainers.CleanupContainer(t, ctr)

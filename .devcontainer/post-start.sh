@@ -15,9 +15,8 @@ done
 
 if [[ ${#MISSING[@]} -eq 0 ]]; then
   echo "All packages are already installed."
-  exit 0
+else
+  echo "Installing: ${MISSING[*]}"
+  sudo apt-get update
+  sudo apt-get install -y "${MISSING[@]}"
 fi
-
-echo "Installing: ${MISSING[*]}"
-sudo apt-get update
-sudo apt-get install -y "${MISSING[@]}"
