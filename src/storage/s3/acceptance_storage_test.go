@@ -73,12 +73,12 @@ func newTestServer(t *testing.T) (*httptest.Server, *http.Client) {
 	}
 
 	store := NewStorage(ctx, storageConfig)
-	eventPublisher := event.NewPublisher()
+	bus := event.NewBus(nil, nil)
 	hs := &[]handlers.Handler{
 		handlers.NewGetHandler(&store),
-		handlers.NewCreateHandler(&store, &eventPublisher),
-		handlers.NewReplaceHandler(&store, &eventPublisher),
-		handlers.NewRemoveHandler(&store, &eventPublisher),
+		handlers.NewCreateHandler(&store, bus),
+		handlers.NewReplaceHandler(&store, bus),
+		handlers.NewRemoveHandler(&store, bus),
 		handlers.NewExistsHandler(&store),
 	}
 

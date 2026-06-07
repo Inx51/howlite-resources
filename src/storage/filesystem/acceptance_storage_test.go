@@ -19,13 +19,12 @@ func newTestServer(t *testing.T) (*httptest.Server, *http.Client) {
 	dir := t.TempDir()
 
 	store := NewStorage(&configuration.FilesystemConfiguration{PATH: dir})
-	eventPublisher := event.NewPublisher()
+	bus := event.NewBus(nil, nil)
 	hs := &[]handlers.Handler{
 		handlers.NewGetHandler(&store),
-		handlers.NewCreateHandler(&store, &eventPublisher),
-		handlers.NewReplaceHandler(&store, &eventPublisher),
-		handlers.NewRemoveHandler(&store, &eventPublisher),
-		handlers.NewExistsHandler(&store),
+		handlers.NewCreateHandler(&store, bus),
+		handlers.NewReplaceHandler(&store, bus),
+		handlers.NewRemoveHandler(&store, bus),
 	}
 
 	ts := httptest.NewServer(httpserver.NewServeMux(hs))
