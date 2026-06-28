@@ -50,6 +50,10 @@ func SetupTracing(
 }
 
 func ShutdownTracing(ctx context.Context) {
+	if tracerProvider == nil {
+		return
+	}
+
 	if err := tracerProvider.Shutdown(ctx); err != nil {
 		logger.Error(ctx, "OpenTelemetry failed to shutdown tracer provider", "error", err)
 		return

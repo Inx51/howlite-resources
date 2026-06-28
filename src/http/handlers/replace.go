@@ -3,7 +3,10 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"time"
 
+	"github.com/inx51/howlite-resources/event"
+	"github.com/inx51/howlite-resources/event/types"
 	"github.com/inx51/howlite-resources/http/uri"
 	"github.com/inx51/howlite-resources/logger"
 	"github.com/inx51/howlite-resources/meter"
@@ -16,6 +19,7 @@ import (
 
 type ReplaceHandler struct {
 	storage *storage.Storage
+	bus     *event.Bus
 }
 
 func (handler *ReplaceHandler) Method() string {
@@ -75,12 +79,24 @@ func (handler *ReplaceHandler) Handle(
 	location := uri.AbsoluteUri(req)
 	resp.Header().Add("Location", location)
 	if !resourceExists {
+		handler.bus.Publish(
+			ctx,
+			types.ResourceCreated{
+				CreatedUtc:       time.Now(),
+				ResourceIdentity: resourceIdentifier.Identifier(),
+			})
 		meter.ArithmeticInt64Counter(ctx, "resources_created_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
 		meter.ArithmeticInt64Counter(ctx, "resources_overall", 1)
 		logger.Info(ctx, "Resource created", "resourceIdentifier", resourceIdentifier.Identifier())
 		statusCode = http.StatusCreated
 		resp.WriteHeader(statusCode)
 	} else {
+		handler.bus.Publish(
+			ctx,
+			types.ResourceReplaced{
+				ReplacedUtc:      time.Now(),
+				ResourceIdentity: resourceIdentifier.Identifier(),
+			})
 		meter.ArithmeticInt64Counter(ctx, "resources_replaced_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
 		logger.Info(ctx, "Existing resource replaced", "resourceIdentifier", resourceIdentifier.Identifier())
 		resp.WriteHeader(statusCode)
@@ -88,8 +104,9 @@ func (handler *ReplaceHandler) Handle(
 	return statusCode, nil
 }
 
-func NewReplaceHandler(storage *storage.Storage) Handler {
+func NewReplaceHandler(storage *storage.Storage, bus *event.Bus) Handler {
 	return &ReplaceHandler{
 		storage: storage,
+		bus:     bus,
 	}
 }

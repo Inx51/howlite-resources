@@ -6,11 +6,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/inx51/howlite-resources/configuration"
+	"github.com/inx51/howlite-resources/event"
 	"github.com/inx51/howlite-resources/http/handlers"
 	httpserver "github.com/inx51/howlite-resources/http/server"
 	"github.com/stretchr/testify/require"
@@ -20,6 +22,11 @@ import (
 
 const testContainer = "test-container"
 
+func TestMain(m *testing.M) {
+	os.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+	os.Exit(m.Run())
+}
+
 func newTestServer(t *testing.T) (*httptest.Server, *http.Client) {
 	t.Helper()
 	ctx := context.Background()
@@ -28,7 +35,7 @@ func newTestServer(t *testing.T) (*httptest.Server, *http.Client) {
 		ctx,
 		"mcr.microsoft.com/azure-storage/azurite:3.28.0",
 		tcazurite.WithEnabledServices(tcazurite.BlobService),
-		testcontainers.WithCmdArgs("--skipApiVersionCheck"),
+		testcontainers.WithCmdArgs("--skipApiVersionCheck", "--disableProductStyleUrl"),
 	)
 	require.NoError(t, err)
 	testcontainers.CleanupContainer(t, ctr)
@@ -57,11 +64,12 @@ func newTestServer(t *testing.T) (*httptest.Server, *http.Client) {
 	}
 
 	store := NewStorage(storageConfig)
+	bus := event.NewBus(nil, nil)
 	hs := &[]handlers.Handler{
 		handlers.NewGetHandler(&store),
-		handlers.NewCreateHandler(&store),
-		handlers.NewReplaceHandler(&store),
-		handlers.NewRemoveHandler(&store),
+		handlers.NewCreateHandler(&store, bus),
+		handlers.NewReplaceHandler(&store, bus),
+		handlers.NewRemoveHandler(&store, bus),
 		handlers.NewExistsHandler(&store),
 	}
 
