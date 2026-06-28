@@ -1,10 +1,10 @@
 
 <p>
-	<img src="https://img.shields.io/badge/status-in%20development-orange" alt="status"/>
+	<img src="https://img.shields.io/badge/status-in%20beta-orange" alt="status"/>
 </p>
 
 > [!IMPORTANT]  
-> All code and documentation is subject to change and is currently in development!
+> All code and documentation is subject to change and is currently in beta!
 
 # Howlite Resources
 
@@ -17,7 +17,7 @@ Howlite Resources lets you store, fetch, update, and delete any kind of resource
 ## ✨ Features
 
 - **RESTful API:** POST, GET, PUT, DELETE, HEAD for resources
-- **Pluggable storage:** Filesystem, S3, and more
+- **Pluggable storage:** Filesystem, S3, Azure Blob Storage
 - **OpenTelemetry:** Metrics & tracing built-in
 - **Easy config:** Environment variables or .env
 
@@ -79,7 +79,7 @@ The default provider. Stores resources as files on the local disk.
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_NAME | filesystem | Selects the filesystem provider |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_FILESYSTEM_PATH | ./tmp/howlite | Directory for storing files |
 
-#### S3 (Work in progress)
+#### S3
 
 Store resources in an S3-compatible object storage (e.g., AWS S3, MinIO).
 
@@ -87,23 +87,42 @@ Store resources in an S3-compatible object storage (e.g., AWS S3, MinIO).
 |---|---|---|
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_NAME | s3 | Selects the S3 provider |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_BUCKET |  | S3 bucket name |
-| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_PREFIX |  | Prefix for S3 object keys |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_ACCESS_KEY |  | S3 access key |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_SECRET_KEY |  | S3 secret key |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_ENDPOINT |  | S3 endpoint URL |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_REGION |  | S3 region |
-| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_UPLOAD_STRATEGY | singlepart | Upload strategy: singlepart or multipart |
-| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_MULTIPART_PART_UPLOAD_SIZE | 5242880 | Multipart upload part size (bytes) |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_PART_UPLOAD_SIZE | 5242880 | Multipart upload part size (bytes) |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_UPLOAD_CONCURRENCY | 5 | Number of concurrent upload parts |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_DOWNLOAD_CONCURRENCY | 5 | Number of concurrent download parts |
 
-<!-- Add more providers here as they are implemented -->
+#### Azure Blob Storage
+
+Store resources in Azure Blob Storage.
+
+| Variable | Default | Description |
+|---|---|---|
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_NAME | azureblob | Selects the Azure Blob Storage provider |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_CONNECTION_STRING |  | Azure Storage connection string |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_CONTAINER_NAME |  | Blob container name |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_BLOCK_SIZE | 8388608 | Block size for uploads (bytes) |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_UPLOAD_CONCURRENCY | 5 | Number of concurrent upload blocks |
+
+### Event Publisher
+
+Howlite Resources can publish events when resources are created, replaced, or removed. Events are delivered reliably via a SQLite-backed outbox.
+
+| Variable | Default | Description |
+|---|---|---|
+| HOWLITE_RESOURCE_EVENT_PUBLISHER_ENDPOINT |  | ZeroMQ endpoint to publish events to |
+| HOWLITE_RESOURCE_EVENT_OUTBOX_SQLITE_PATH |  | Path to the SQLite outbox database file |
 
 ### Telemetry
 
 | Variable | Default | Description |
 |---|---|---|
-| HOWLITE_RESOURCE_TRACING_LEVEL | Debug, Info | Tracing level |
+| HOWLITE_RESOURCE_TRACING_LEVEL | Info | Tracing level |
 
-Support for standard OTEL environemnt variables.
+Support for standard OTEL environment variables.
 Read more [here](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/)
 
 ---
