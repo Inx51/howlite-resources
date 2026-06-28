@@ -37,6 +37,10 @@ func SetupMetric(ctx context.Context) {
 }
 
 func ShutdownMetrics(ctx context.Context) {
+	if meterProvider == nil {
+		return
+	}
+
 	if err := meterProvider.Shutdown(ctx); err != nil {
 		logger.Error(ctx, "OpenTelemetry failed to shutdown meter provider", "error", err)
 		return

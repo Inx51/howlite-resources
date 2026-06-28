@@ -3,7 +3,10 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"time"
 
+	"github.com/inx51/howlite-resources/event"
+	"github.com/inx51/howlite-resources/event/types"
 	"github.com/inx51/howlite-resources/http/uri"
 	"github.com/inx51/howlite-resources/logger"
 	"github.com/inx51/howlite-resources/meter"
@@ -16,6 +19,7 @@ import (
 
 type CreateHandler struct {
 	storage *storage.Storage
+	bus     *event.Bus
 }
 
 func (handler *CreateHandler) Method() string {
@@ -77,6 +81,13 @@ func (handler *CreateHandler) Handle(
 	meter.ArithmeticInt64Counter(ctx, "resources_created_total", 1, metric.WithAttributes(attribute.String("resource_identifier", resourceIdentifier.Identifier())))
 	meter.ArithmeticInt64Counter(ctx, "resources_overall", 1)
 
+	handler.bus.Publish(
+		ctx,
+		types.ResourceCreated{
+			CreatedUtc:       time.Now(),
+			ResourceIdentity: resourceIdentifier.Identifier(),
+		})
+
 	location := uri.AbsoluteUri(req)
 	resp.Header().Add("Location", location)
 	resp.WriteHeader(statusCode)
@@ -84,8 +95,9 @@ func (handler *CreateHandler) Handle(
 	return statusCode, nil
 }
 
-func NewCreateHandler(storage *storage.Storage) Handler {
+func NewCreateHandler(storage *storage.Storage, bus *event.Bus) Handler {
 	return &CreateHandler{
 		storage: storage,
+		bus:     bus,
 	}
 }

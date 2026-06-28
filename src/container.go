@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/inx51/howlite-resources/configuration"
+	"github.com/inx51/howlite-resources/event"
 	"github.com/inx51/howlite-resources/http/handlers"
 	"github.com/inx51/howlite-resources/http/server"
 	"github.com/inx51/howlite-resources/logger"
@@ -15,9 +16,11 @@ import (
 )
 
 type Container struct {
-	storage  storage.Storage
-	handlers *[]handlers.Handler
-	server   *server.Server
+	storage      storage.Storage
+	handlers     *[]handlers.Handler
+	server       *server.Server
+	bus          *event.Bus
+	outboxWorker *event.OutboxWorker
 }
 
 func NewContainer() *Container {
@@ -42,12 +45,42 @@ func (container *Container) setupStorage(ctx context.Context, configuration conf
 func (container *Container) setupHandlers() {
 	container.handlers = &[]handlers.Handler{
 		handlers.NewGetHandler(&container.storage),
-		handlers.NewCreateHandler(&container.storage),
-		handlers.NewReplaceHandler(&container.storage),
-		handlers.NewRemoveHandler(&container.storage),
+		handlers.NewCreateHandler(&container.storage, container.bus),
+		handlers.NewReplaceHandler(&container.storage, container.bus),
+		handlers.NewRemoveHandler(&container.storage, container.bus),
 		handlers.NewExistsHandler(&container.storage),
 		handlers.NewSysProbeHandler(),
 	}
+}
+
+func (container *Container) setupEventPublisher(ctx context.Context, configuration configuration.EventPublisher) {
+
+	var publisherPtr *event.Publisher
+	var outboxPtr *event.Outbox
+
+	if configuration.EVENT_PUBLISHER_ENDPOINT != "" {
+		publisher := event.NewPublisher(ctx, configuration.EVENT_PUBLISHER_ENDPOINT)
+		if !publisher.IsAvailable() {
+			logger.Error(ctx, "Event publisher configured but unavailable in this build")
+			return
+		}
+		publisherPtr = &publisher
+	} else {
+		logger.Info(ctx, "No event publisher endpoint specified, events will not be published")
+		return
+	}
+
+	if configuration.OUTBOX_SQLITE_PATH != "" {
+		outbox := event.NewOutbox(ctx, configuration.OUTBOX_SQLITE_PATH)
+		outboxPtr = &outbox
+
+		outboxWorker := event.NewOutboxWorker(ctx, outboxPtr, publisherPtr)
+		container.outboxWorker = &outboxWorker
+	} else {
+		logger.Info(ctx, "No outbox path specified, published events will not be persisted")
+	}
+
+	container.bus = event.NewBus(publisherPtr, outboxPtr) // One or both can be nil
 }
 
 func (container *Container) setupHttpServer(configuration configuration.HttpServer) {

@@ -20,9 +20,12 @@ func main() {
 	configurations := application.ConfigureConfigurations(ctx)
 
 	//Telemetry
-	telemetry.SetupLogging(ctx)
-	telemetry.SetupMetric(ctx)
-	telemetry.SetupTracing(ctx, &configurations.TRACING)
+	otelEnabled := telemetry.IsEnabled()
+	if otelEnabled {
+		telemetry.SetupLogging(ctx)
+		telemetry.SetupMetric(ctx)
+		telemetry.SetupTracing(ctx, &configurations.TRACING)
+	}
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	application.ConfigureContainer(ctx)
@@ -34,7 +37,9 @@ func main() {
 	defer shutdownCancel()
 	application.Shutdown(shutdownContext)
 	logger.Info(shutdownContext, "Application shutdown gracefully")
-	telemetry.ShutdownMetrics(shutdownContext)
-	telemetry.ShutdownTracing(shutdownContext)
-	telemetry.ShutdownLogging(shutdownContext)
+	if otelEnabled {
+		telemetry.ShutdownMetrics(shutdownContext)
+		telemetry.ShutdownTracing(shutdownContext)
+		telemetry.ShutdownLogging(shutdownContext)
+	}
 }

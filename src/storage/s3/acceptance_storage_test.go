@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/inx51/howlite-resources/configuration"
+	"github.com/inx51/howlite-resources/event"
 	"github.com/inx51/howlite-resources/http/handlers"
 	httpserver "github.com/inx51/howlite-resources/http/server"
 	"github.com/stretchr/testify/require"
@@ -72,11 +73,12 @@ func newTestServer(t *testing.T) (*httptest.Server, *http.Client) {
 	}
 
 	store := NewStorage(ctx, storageConfig)
+	bus := event.NewBus(nil, nil)
 	hs := &[]handlers.Handler{
 		handlers.NewGetHandler(&store),
-		handlers.NewCreateHandler(&store),
-		handlers.NewReplaceHandler(&store),
-		handlers.NewRemoveHandler(&store),
+		handlers.NewCreateHandler(&store, bus),
+		handlers.NewReplaceHandler(&store, bus),
+		handlers.NewRemoveHandler(&store, bus),
 		handlers.NewExistsHandler(&store),
 	}
 
