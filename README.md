@@ -83,29 +83,35 @@ The default provider. Stores resources as files on the local disk.
 
 Store resources in an S3-compatible object storage (e.g., AWS S3, MinIO).
 
+Uploads and downloads are performed in parallel parts/chunks. Increasing concurrency can improve throughput for large resources by transferring multiple parts simultaneously, but each concurrent part consumes memory and a goroutine for its duration. The part size determines how the resource is split — smaller parts mean more parallel operations (up to the concurrency limit); larger parts reduce overhead but require more memory per part.
+
+> **Rule of thumb:** The default values work well for most cases. Raise concurrency only if you have large resources, high network bandwidth, and can afford the added memory usage per request. Each upload/download request uses up to `concurrency × part_size` bytes of memory.
+
 | Variable | Default | Description |
 |---|---|---|
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_NAME | s3 | Selects the S3 provider |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_BUCKET |  | S3 bucket name |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_ACCESS_KEY |  | S3 access key |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_SECRET_KEY |  | S3 secret key |
-| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_ENDPOINT |  | S3 endpoint URL |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_ENDPOINT |  | S3 endpoint URL (leave empty for AWS) |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_REGION |  | S3 region |
-| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_PART_UPLOAD_SIZE | 5242880 | Multipart upload part size (bytes) |
-| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_UPLOAD_CONCURRENCY | 5 | Number of concurrent upload parts |
-| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_DOWNLOAD_CONCURRENCY | 5 | Number of concurrent download parts |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_PART_UPLOAD_SIZE | 5242880 | Size of each part in a multipart transfer (bytes). Affects both upload and download chunking. |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_UPLOAD_CONCURRENCY | 5 | Number of parts uploaded in parallel per PUT/POST request. Higher values increase upload speed for large resources at the cost of memory and CPU. |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_S3_DOWNLOAD_CONCURRENCY | 5 | Number of parts downloaded in parallel per GET request. Higher values increase download speed for large resources at the cost of memory and CPU. |
 
 #### Azure Blob Storage
 
-Store resources in Azure Blob Storage.
+Store resources in Azure Blob Storage. Uploads are split into blocks that are sent in parallel and then committed as a single blob.
+
+The block size determines how the resource is divided for upload. Larger blocks mean fewer network round-trips but higher memory usage per upload. Concurrency controls how many blocks are in-flight at once — increasing it can improve upload speed for large blobs, at the cost of more memory (up to `concurrency × block_size` bytes per upload request).
 
 | Variable | Default | Description |
 |---|---|---|
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_NAME | azureblob | Selects the Azure Blob Storage provider |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_CONNECTION_STRING |  | Azure Storage connection string |
 | HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_CONTAINER_NAME |  | Blob container name |
-| HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_BLOCK_SIZE | 8388608 | Block size for uploads (bytes) |
-| HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_UPLOAD_CONCURRENCY | 5 | Number of concurrent upload blocks |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_BLOCK_SIZE | 8388608 | Size of each block in a block blob upload (bytes, default 8 MiB). Larger values reduce round-trips but increase memory usage per upload. |
+| HOWLITE_RESOURCE_STORAGE_PROVIDER_AZUREBLOB_UPLOAD_CONCURRENCY | 5 | Number of blocks uploaded in parallel per PUT/POST request. Higher values increase upload speed for large blobs at the cost of memory and CPU. |
 
 ### Event Publisher
 
