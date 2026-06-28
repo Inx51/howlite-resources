@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build !windows && cgo
 
 package event
 
@@ -13,6 +13,10 @@ import (
 type Publisher struct {
 	socket *goczmq.Sock
 }
+
+func (publisher Publisher) IsAvailable() bool {
+	return publisher.socket != nil
+	}
 
 func NewPublisher(ctx context.Context, endpoint string) Publisher {
 	ctx, span := tracer.StartInfoSpan(ctx, "zeromq.publisher.init")
@@ -33,6 +37,11 @@ func NewPublisher(ctx context.Context, endpoint string) Publisher {
 }
 
 func (publisher *Publisher) Publish(ctx context.Context, event []byte) {
+	if publisher == nil || publisher.socket == nil {
+		logger.Error(ctx, "Zero mq publisher is not available")
+		return
+	}
+
 	ctx, span := tracer.StartDebugSpan(ctx, "zeromq.sendframe")
 	defer tracer.SafeEndSpan(span)
 
@@ -47,5 +56,9 @@ func (publisher *Publisher) Publish(ctx context.Context, event []byte) {
 }
 
 func (publisher *Publisher) Stop() {
+	if publisher == nil || publisher.socket == nil {
+		return
+	}
+
 	publisher.socket.Destroy()
 }

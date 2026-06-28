@@ -60,6 +60,10 @@ func (container *Container) setupEventPublisher(ctx context.Context, configurati
 
 	if configuration.EVENT_PUBLISHER_ENDPOINT != "" {
 		publisher := event.NewPublisher(ctx, configuration.EVENT_PUBLISHER_ENDPOINT)
+		if !publisher.IsAvailable() {
+			logger.Error(ctx, "Event publisher configured but unavailable in this build")
+			return
+		}
 		publisherPtr = &publisher
 	} else {
 		logger.Info(ctx, "No event publisher endpoint specified, events will not be published")
