@@ -83,6 +83,7 @@ func (handler *CreateHandler) Handle(
 
 	handler.bus.Publish(
 		ctx,
+		types.ResourceCreatedEventType,
 		types.ResourceCreated{
 			CreatedUtc:       time.Now(),
 			ResourceIdentity: resourceIdentifier.Identifier(),

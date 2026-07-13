@@ -81,6 +81,7 @@ func (handler *ReplaceHandler) Handle(
 	if !resourceExists {
 		handler.bus.Publish(
 			ctx,
+			types.ResourceRemoavedEventType,
 			types.ResourceCreated{
 				CreatedUtc:       time.Now(),
 				ResourceIdentity: resourceIdentifier.Identifier(),
@@ -93,6 +94,7 @@ func (handler *ReplaceHandler) Handle(
 	} else {
 		handler.bus.Publish(
 			ctx,
+			types.ResourceRepalcedEventType,
 			types.ResourceReplaced{
 				ReplacedUtc:      time.Now(),
 				ResourceIdentity: resourceIdentifier.Identifier(),

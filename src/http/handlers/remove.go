@@ -76,6 +76,7 @@ func (handler *RemoveHandler) Handle(
 
 	handler.bus.Publish(
 		ctx,
+		types.ResourceRemoavedEventType,
 		types.ResourceRemoved{
 			RemovedUtc:       time.Now(),
 			ResourceIdentity: resourceIdentifier.Identifier(),

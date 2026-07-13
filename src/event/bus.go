@@ -19,8 +19,14 @@ func NewBus(publisher *Publisher, outbox *Outbox) *Bus {
 	}
 }
 
-func (bus *Bus) Publish(ctx context.Context, event any) {
-	msg, err := msgpack.Marshal(event)
+func (bus *Bus) Publish(ctx context.Context, eventType string, eventData any) {
+	envelope, err := NewEnvelope(eventType, eventData)
+	if err != nil {
+		logger.Error(ctx, "failed to build envelope", "error", err)
+		return
+	}
+
+	msg, err := msgpack.Marshal(envelope)
 	if err != nil {
 		logger.Error(ctx, "failed to marshall event", "error", err)
 		return
