@@ -2,9 +2,9 @@ package event
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/inx51/howlite-resources/logger"
-	"github.com/vmihailenco/msgpack/v5"
 )
 
 type Bus struct {
@@ -26,7 +26,7 @@ func (bus *Bus) Publish(ctx context.Context, eventType string, eventData any) {
 		return
 	}
 
-	msg, err := msgpack.Marshal(envelope)
+	msg, err := json.Marshal(envelope)
 	if err != nil {
 		logger.Error(ctx, "failed to marshall event", "error", err)
 		return

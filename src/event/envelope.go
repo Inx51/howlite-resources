@@ -1,14 +1,14 @@
 package event
 
-import "github.com/vmihailenco/msgpack/v5"
+import "encoding/json"
 
 type Envelope struct {
-	Data msgpack.RawMessage
-	Type string
+	Data json.RawMessage `json:"data"`
+	Type string          `json:"type"`
 }
 
 func NewEnvelope(eventType string, eventData any) (*Envelope, error) {
-	raw, err := msgpack.Marshal(eventData)
+	raw, err := json.Marshal(eventData)
 	if err != nil {
 		return nil, err
 	}

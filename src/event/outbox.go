@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/inx51/howlite-resources/logger"
 	_ "github.com/mattn/go-sqlite3"
@@ -30,7 +31,8 @@ func runMigrations(ctx context.Context, db *sql.DB) {
 	if _, err := db.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS outbox (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			payload BLOB NOT NULL
+			payload TEXT NOT NULL,
+			enqueued_utc TEXT NOT NULL
 		)
 	`); err != nil {
 		_ = db.Close()
@@ -45,14 +47,16 @@ func setupSqliteFile(sqlitePath string) {
 }
 
 func (outbox *Outbox) Enqueue(ctx context.Context, event []byte) {
-	err := appendMessageToDb(ctx, outbox.db, event)
+	err := appendMessageToDb(ctx, outbox.db, event, time.Now().UTC())
 	if err != nil {
 		logger.Error(ctx, "failed to save to outbox", "error", err)
 	}
 }
 
-func appendMessageToDb(ctx context.Context, db *sql.DB, event []byte) error {
-	_, err := db.ExecContext(ctx, `INSERT INTO outbox(payload) VALUES (?)`, event)
+func appendMessageToDb(ctx context.Context, db *sql.DB, event []byte, enqueuedUtc time.Time) error {
+	_, err := db.ExecContext(ctx, `
+		INSERT INTO outbox(payload, enqueued_utc) VALUES (?, ?)
+	`, string(event), enqueuedUtc.Format(time.RFC3339Nano))
 	return err
 }
 
@@ -73,7 +77,7 @@ func (outbox *Outbox) Dequeue(ctx context.Context) []byte {
 }
 
 func getLatestMessageFromDb(ctx context.Context, db *sql.DB) ([]byte, error) {
-	var payload []byte
+	var payload string
 	err := db.QueryRowContext(ctx, `
 		DELETE FROM outbox
 		WHERE id = (
@@ -88,7 +92,7 @@ func getLatestMessageFromDb(ctx context.Context, db *sql.DB) ([]byte, error) {
 		return nil, err
 	}
 
-	return payload, nil
+	return []byte(payload), nil
 }
 
 func (outbox *Outbox) Close(ctx context.Context) {
