@@ -58,8 +58,12 @@ func (container *Container) setupEventPublisher(ctx context.Context, configurati
 	var publisherPtr *event.Publisher
 	var outboxPtr *event.Outbox
 
-	if configuration.EVENT_PUBLISHER_ENDPOINT != "" {
-		publisher := event.NewPublisher(ctx, configuration.EVENT_PUBLISHER_ENDPOINT)
+	if configuration.ZEROMQ_CONFIGURATION.ENDPOINT != "" {
+		if configuration.ZEROMQ_CONFIGURATION.CURVE.SERVER_CERT_PATH == "" {
+			logger.Info(ctx, "No CURVE server cert path specified, zero mq connection will not be encrypted")
+		}
+
+		publisher := event.NewPublisher(ctx, configuration.ZEROMQ_CONFIGURATION)
 		if !publisher.IsAvailable() {
 			logger.Error(ctx, "Event publisher configured but unavailable in this build")
 			return

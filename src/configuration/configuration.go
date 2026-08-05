@@ -63,8 +63,26 @@ type AzureBlobStorageConfiguration struct {
 }
 
 type EventPublisher struct {
-	EVENT_PUBLISHER_ENDPOINT string `env:"HOWLITE_RESOURCE_EVENT_PUBLISHER_ENDPOINT"`
-	OUTBOX_SQLITE_PATH       string `env:"HOWLITE_RESOURCE_EVENT_OUTBOX_SQLITE_PATH"`
+	OUTBOX_SQLITE_PATH   string `env:"HOWLITE_RESOURCE_EVENT_PUBLISHER_OUTBOX_SQLITE_PATH"`
+	ZEROMQ_CONFIGURATION ZeroMqConfiguration
+}
+
+// SERVER_CERT_PATH must point at a CZMQ secret cert file (the "*_secret"
+// file produced by zcert_save / goczmq-certgen), which holds both the
+// publisher's public and secret key.
+//
+// ALLOWED_CLIENTS_PATH is optional and points at a directory of public
+// cert files (a CZMQ certstore) for the subscribers allowed to connect. If
+// left empty, any client with a CURVE keypair is accepted (CURVE_ALLOW_ANY) -
+// connections are still encrypted, but not restricted to known peers.
+type ZeroMqConfiguration struct {
+	ENDPOINT string `env:"HOWLITE_RESOURCE_EVENT_PUBLISHER_ZEROMQ_ENDPOINT"`
+	CURVE    ZeroMqCurveConfiguration
+}
+
+type ZeroMqCurveConfiguration struct {
+	SERVER_CERT_PATH     string `env:"HOWLITE_RESOURCE_EVENT_PUBLISHER_ZEROMQ_CURVE_SERVER_CERT_PATH"`
+	ALLOWED_CLIENTS_PATH string `env:"HOWLITE_RESOURCE_EVENT_PUBLISHER_ZEROMQ_CURVE_ALLOWED_CLIENTS_PATH"`
 }
 
 //TODO: We should validate the configuration values so we can throw any unexpected configuration errors on startup..
