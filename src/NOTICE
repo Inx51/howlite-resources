@@ -1,0 +1,71 @@
+Howlite Resources
+Copyright (c) 2025 Inx51
+
+This product is licensed under the MIT License. See the LICENSE file in the
+project repository at https://github.com/inx51/howlite-resources for the full
+text.
+
+This distribution bundles third-party components under their own terms. The
+components below are included UNMODIFIED as published by their upstream
+projects; no changes have been made to their source.
+
+--------------------------------------------------------------------------------
+Native libraries (linked via cgo / present in the container image)
+--------------------------------------------------------------------------------
+
+libzmq (ZeroMQ core library)
+    License: LGPL-3.0-or-later, WITH the linking exception granted by the
+             copyright holders.
+    Source:  https://github.com/zeromq/libzmq
+
+    The exception grants permission to link libzmq with independent modules and
+    to distribute the resulting executable under terms of your choice, and
+    relieves the distributor of the obligations in sections 4 and 5 of the LGPL
+    and section 6 of the GPL. libzmq is shipped here as an unmodified shared
+    library, dynamically linked.
+
+czmq (high-level C binding for ZeroMQ)
+    License: MPL-2.0 (with portions under BSD-3-Clause)
+    Source:  https://github.com/zeromq/czmq
+
+libsodium
+    License: ISC
+    Source:  https://github.com/jedisct1/libsodium
+
+The container image is based on Alpine Linux and therefore also contains
+packages such as musl (MIT), busybox (GPL-2.0-only), apk-tools (GPL-2.0-only)
+and alpine-baselayout. These are independent programs aggregated in the image;
+they are not linked into the Howlite Resources binary. Corresponding sources
+for all Alpine packages are published at https://gitlab.alpinelinux.org/alpine/aports
+and via https://pkgs.alpinelinux.org.
+
+A machine-generated inventory of every apk package in this image and its
+license is available inside the image at:
+
+    /thirdparty-licenses/native/APK_PACKAGE_LICENSES.txt
+
+--------------------------------------------------------------------------------
+Go module dependencies
+--------------------------------------------------------------------------------
+
+Go dependencies are predominantly MIT, Apache-2.0 and BSD-licensed. One direct
+dependency is copyleft:
+
+github.com/zeromq/goczmq
+    License: MPL-2.0
+    Source:  https://github.com/zeromq/goczmq
+
+MPL-2.0 applies file-by-file and imposes no conditions on the MIT-licensed code
+in this project. goczmq is used unmodified.
+
+Full per-module license texts and a summary report are included inside the
+image at:
+
+    /thirdparty-licenses/
+    /THIRD_PARTY_LICENSES.csv
+
+--------------------------------------------------------------------------------
+
+To obtain the corresponding source code for any LGPL- or MPL-licensed component
+listed above, use the upstream source URLs given for each component. All such
+components are redistributed unmodified.

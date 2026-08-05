@@ -114,8 +114,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.description=Simple, pluggable HTTP resource store for fast prototyping and storage of any type of data.
+            org.opencontainers.image.licenses=MIT
           tags: |
-            type=ref,event=branch
             type=sha
             type=raw,value=dev
 
